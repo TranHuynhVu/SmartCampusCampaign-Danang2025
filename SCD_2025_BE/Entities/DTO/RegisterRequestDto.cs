@@ -4,9 +4,6 @@ namespace SCD_2025_BE.Entities.DTO
 {
     public class RegisterRequestDto
     {
-        [Required(ErrorMessage = "Họ và tên không được để trống.")]
-        [StringLength(100, ErrorMessage = "Họ và tên tối đa 100 ký tự.")]
-        public string FullName { get; set; }
 
         [Required(ErrorMessage = "Email không được để trống.")]
         [EmailAddress(ErrorMessage = "Email không hợp lệ.")]
@@ -22,8 +19,8 @@ namespace SCD_2025_BE.Entities.DTO
         [Compare("Password", ErrorMessage = "Mật khẩu xác nhận không khớp.")]
         public string ConfirmPassword { get; set; }
 
-        public string? Skills { get; set; }
-        public string? RolesInStartup { get; set; }
-        public string? CategoryInvests { get; set; }
+        [Required(ErrorMessage = "Vui lòng chọn vai trò.")]
+        [RegularExpression("^(Student|Company)$", ErrorMessage = "Vai trò phải là Student hoặc Company.")]
+        public string Role { get; set; }
     }
 }

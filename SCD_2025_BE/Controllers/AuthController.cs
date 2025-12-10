@@ -29,6 +29,12 @@ namespace SCD_2025_BE.Controllers
         [Route("Register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequestDto requestDto)
         {
+            // Validate role
+            if (requestDto.Role != "Student" && requestDto.Role != "Company")
+            {
+                return BadRequest(new { Message = "Vai trò phải là Student hoặc Company." });
+            }
+
             var user = new AppUser
             {
                 UserName = requestDto.Email,
@@ -40,16 +46,16 @@ namespace SCD_2025_BE.Controllers
 
             if (result.Succeeded)
             {
-                // Kiểm tra role "Client" có tồn tại chưa
-                if (!await _roleManager.RoleExistsAsync("Student"))
+                // Kiểm tra và tạo role nếu chưa có
+                if (!await _roleManager.RoleExistsAsync(requestDto.Role))
                 {
-                    await _roleManager.CreateAsync(new IdentityRole("Student"));
+                    await _roleManager.CreateAsync(new IdentityRole(requestDto.Role));
                 }
 
                 // Gán role cho user
-                await _userManager.AddToRoleAsync(user, "Student");
+                await _userManager.AddToRoleAsync(user, requestDto.Role);
 
-                return Ok(new { Message = "User registered successfully." });
+                return Ok(new { Message = "Đăng ký thành công.", Role = requestDto.Role });
             }
             else
             {
