@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using SCD_2025_BE.Entities.Domains;
 using SCD_2025_BE.Entities.DTO;
 using SCD_2025_BE.Repositories;
+using SCD_2025_BE.Service;
 using System.Security.Claims;
+using System.Text.Json;
 
 namespace SCD_2025_BE.Controllers
 {
@@ -13,10 +15,12 @@ namespace SCD_2025_BE.Controllers
     public class JobsController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IGemini _geminiService;
 
-        public JobsController(IUnitOfWork unitOfWork)
+        public JobsController(IUnitOfWork unitOfWork, IGemini geminiService)
         {
             _unitOfWork = unitOfWork;
+            _geminiService = geminiService;
         }
 
         // GET: api/Jobs
@@ -164,6 +168,9 @@ namespace SCD_2025_BE.Controllers
                 UpdatedBy = userId
             };
 
+            // Tạo embedding từ Requirements và NiceToHave
+            job.Embeddings = await _geminiService.GetJobEmbedding(job);
+
             await _unitOfWork.Jobs.AddAsync(job);
             await _unitOfWork.SaveChangesAsync();
 
@@ -234,6 +241,9 @@ namespace SCD_2025_BE.Controllers
             job.UpdatedAt = DateTime.UtcNow;
             job.UpdatedBy = userId;
 
+            // Cập nhật lại embedding nếu Requirements hoặc NiceToHave thay đổi
+            job.Embeddings = await _geminiService.GetJobEmbedding(job);
+
             _unitOfWork.Jobs.Update(job);
             await _unitOfWork.SaveChangesAsync();
 
@@ -267,6 +277,84 @@ namespace SCD_2025_BE.Controllers
             await _unitOfWork.SaveChangesAsync();
 
             return NoContent();
+        }
+
+        // GET: api/Jobs/CandidateSuggestions/{jobId}
+        [HttpGet("CandidateSuggestions/{jobId}")]
+        [Authorize(Roles = "Company,Admin")]
+        public async Task<ActionResult<IEnumerable<CandidateSuggestionDto>>> GetCandidateSuggestions(int jobId, [FromQuery] int top = 10)
+        {
+            var job = await _unitOfWork.Jobs.GetJobWithDetailsAsync(jobId);
+            
+            if (job == null || job.DeletedAt != null)
+            {
+                return NotFound(new { Message = "Không tìm thấy công việc." });
+            }
+
+            // Kiểm tra quyền truy cập
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+            if (userRole != "Admin" && job.CompanyInfor.UserId != userId)
+            {
+                return Forbid();
+            }
+
+            if (string.IsNullOrWhiteSpace(job.Embeddings))
+            {
+                return BadRequest(new { Message = "Công việc chưa có embedding. Vui lòng cập nhật công việc." });
+            }
+
+            var jobEmbedding = JsonSerializer.Deserialize<List<double>>(job.Embeddings);
+            if (jobEmbedding == null || jobEmbedding.Count == 0)
+            {
+                return BadRequest(new { Message = "Embedding không hợp lệ." });
+            }
+
+            // Lấy tất cả students đang active
+            var students = await _unitOfWork.StudentInfors.GetActiveStudentsAsync();
+
+            var candidateSuggestions = new List<CandidateSuggestionDto>();
+
+            foreach (var student in students)
+            {
+                if (string.IsNullOrWhiteSpace(student.EmBeddings))
+                    continue;
+
+                var studentEmbedding = JsonSerializer.Deserialize<List<double>>(student.EmBeddings);
+                if (studentEmbedding == null || studentEmbedding.Count == 0)
+                    continue;
+
+                var similarity = _geminiService.CosineSimilarity(jobEmbedding, studentEmbedding);
+
+                candidateSuggestions.Add(new CandidateSuggestionDto
+                {
+                    Id = student.Id,
+                    UserId = student.UserId,
+                    Name = student.Name,
+                    ResumeUrl = student.ResumeUrl,
+                    GPA = student.GPA,
+                    Skills = student.Skills,
+                    Archievements = student.Archievements,
+                    YearOfStudy = student.YearOfStudy,
+                    Major = student.Major,
+                    Languages = student.Languages,
+                    Certifications = student.Certifications,
+                    Experiences = student.Experiences,
+                    Projects = student.Projects,
+                    UpdatedBy = student.UpdatedBy,
+                    CreatedAt = student.CreatedAt,
+                    UpdatedAt = student.UpdatedAt,
+                    SimilarityScore = similarity
+                });
+            }
+
+            // Sắp xếp theo độ tương đồng giảm dần và lấy top kết quả
+            var topSuggestions = candidateSuggestions
+                .OrderByDescending(c => c.SimilarityScore)
+                .Take(top)
+                .ToList();
+
+            return Ok(topSuggestions);
         }
     }
 }

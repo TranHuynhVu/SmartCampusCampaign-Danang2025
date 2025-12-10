@@ -63,6 +63,8 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 builder.Services.AddScoped<ITokenReposity, TokenRepository>();
 
+builder.Services.AddScoped<SCD_2025_BE.Service.IGemini, SCD_2025_BE.Service.GeminiService>();
+
 
 // Add CORS
 builder.Services.AddCors(options =>

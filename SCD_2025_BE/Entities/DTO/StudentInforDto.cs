@@ -45,4 +45,9 @@ namespace SCD_2025_BE.Entities.DTO
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
     }
+
+    public class CandidateSuggestionDto : StudentInforResponseDto
+    {
+        public double SimilarityScore { get; set; }
+    }
 }
