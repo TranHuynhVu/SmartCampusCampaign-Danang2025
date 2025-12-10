@@ -13,6 +13,7 @@ namespace SCD_2025_BE.Repositories
         Task<int> CountAsync(Expression<Func<T, bool>> predicate = null);
         Task<T> AddAsync(T entity);
         Task AddRangeAsync(IEnumerable<T> entities);
+        void Update(T entity);
         Task<T> UpdateAsync(T entity);
         Task UpdateRangeAsync(IEnumerable<T> entities);
         Task<bool> DeleteAsync(int id);

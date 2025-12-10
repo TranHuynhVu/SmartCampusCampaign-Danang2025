@@ -15,10 +15,6 @@ namespace SCD_2025_BE.Entities.DTO
             ErrorMessage = "Mật khẩu phải có ít nhất 1 chữ thường, 1 chữ hoa, 1 số và 1 ký tự đặc biệt.")]
         public string Password { get; set; }
 
-        [Required(ErrorMessage = "Vui lòng xác nhận mật khẩu.")]
-        [Compare("Password", ErrorMessage = "Mật khẩu xác nhận không khớp.")]
-        public string ConfirmPassword { get; set; }
-
         [Required(ErrorMessage = "Vui lòng chọn vai trò.")]
         [RegularExpression("^(Student|Company)$", ErrorMessage = "Vai trò phải là Student hoặc Company.")]
         public string Role { get; set; }

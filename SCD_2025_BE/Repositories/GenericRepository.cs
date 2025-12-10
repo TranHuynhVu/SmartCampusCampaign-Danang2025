@@ -54,28 +54,30 @@ namespace SCD_2025_BE.Repositories
 
         public async Task<T> AddAsync(T entity)
         {
-            _dbSet.Add(entity);
-            await _context.SaveChangesAsync();
+            await _dbSet.AddAsync(entity);
             return entity;
         }
 
         public async Task AddRangeAsync(IEnumerable<T> entities)
         {
-            _dbSet.AddRange(entities);
-            await _context.SaveChangesAsync();
+            await _dbSet.AddRangeAsync(entities);
+        }
+
+        public void Update(T entity)
+        {
+            _dbSet.Update(entity);
         }
 
         public async Task<T> UpdateAsync(T entity)
         {
             _dbSet.Update(entity);
-            await _context.SaveChangesAsync();
-            return entity;
+            return await Task.FromResult(entity);
         }
 
         public async Task UpdateRangeAsync(IEnumerable<T> entities)
         {
             _dbSet.UpdateRange(entities);
-            await _context.SaveChangesAsync();
+            await Task.CompletedTask;
         }
 
         public async Task<bool> DeleteAsync(int id)
@@ -84,7 +86,6 @@ namespace SCD_2025_BE.Repositories
             if (entity == null) return false;
             
             _dbSet.Remove(entity);
-            await _context.SaveChangesAsync();
             return true;
         }
 
@@ -94,7 +95,6 @@ namespace SCD_2025_BE.Repositories
             if (entity == null) return false;
             
             _dbSet.Remove(entity);
-            await _context.SaveChangesAsync();
             return true;
         }
 
@@ -103,14 +103,13 @@ namespace SCD_2025_BE.Repositories
             if (entity == null) return false;
             
             _dbSet.Remove(entity);
-            await _context.SaveChangesAsync();
-            return true;
+            return await Task.FromResult(true);
         }
 
         public async Task DeleteRangeAsync(IEnumerable<T> entities)
         {
             _dbSet.RemoveRange(entities);
-            await _context.SaveChangesAsync();
+            await Task.CompletedTask;
         }
 
         public virtual async Task<(IEnumerable<T> Data, int Total)> GetPaginatedAsync(
