@@ -1,0 +1,6 @@
+@SCD_2025_BE_HostAddress = http://localhost:5165
+
+GET {{SCD_2025_BE_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
