@@ -16,6 +16,17 @@ Hệ thống matching việc làm sử dụng AI để gợi ý công việc ph�
 
 ---
 
+## 🏢 COMPANY FLOW - Luồng nghiệp vụ Doanh nghiệp
+
+### Flow tổng quan:
+1. Đăng ký tài khoản Company
+2. Đăng nhập
+3. Tạo thông tin công ty
+4. Tạo tin tuyển dụng (Job)
+5. Hệ thống tự động tạo embedding cho Job
+6. Xem gợi ý ứng viên phù hợp
+
+
 ### 1. Đăng ký tài khoản Student
 **Endpoint:** `POST /api/Auth/Register`
 

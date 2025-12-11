@@ -136,6 +136,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseStaticFiles(); // Phục vụ file tĩnh từ wwwroot
+
 app.UseCors("AllowAllOrigins");
 
 app.UseAuthentication();

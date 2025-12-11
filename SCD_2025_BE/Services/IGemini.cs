@@ -4,7 +4,7 @@ namespace SCD_2025_BE.Service
 {
     public interface IGemini
     {
-        Task<StudentInfor?> ClassifyStudentCV(byte[] pdfBytes, string fileName);
+        Task<StudentInfor?> ClassifyStudentCV(byte[] pdfBytes);
         Task<List<double>> GetEmbedding(string text);
         Task<string> GetJobEmbedding(Job job);
         Task<string> GetStudentEmbedding(StudentInfor student);

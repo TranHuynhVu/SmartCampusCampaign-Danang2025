@@ -11,7 +11,7 @@ namespace SCD_2025_BE.Service
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IConfiguration _configuration;
         private readonly string _apiKey;
-        private const string GenerateContentModel = "gemini-2.0-flash-exp";
+        private const string GenerateContentModel = "gemini-2.5-flash-lite";
         private const string EmbeddingModel = "text-embedding-004";
 
         public GeminiService(IHttpClientFactory httpClientFactory, IConfiguration configuration)
@@ -21,7 +21,7 @@ namespace SCD_2025_BE.Service
             _apiKey = _configuration["Gemini:Key"] ?? throw new ArgumentNullException("Gemini API Key not found");
         }
 
-        public async Task<StudentInfor?> ClassifyStudentCV(byte[] pdfBytes, string fileName)
+        public async Task<StudentInfor?> ClassifyStudentCV(byte[] pdfBytes)
         {
             try
             {
@@ -32,21 +32,26 @@ namespace SCD_2025_BE.Service
                 var base64Pdf = Convert.ToBase64String(pdfBytes);
 
                 var prompt = @"
-Bạn là một AI chuyên phân tích CV. Hãy trích xuất thông tin từ CV này và trả về dưới dạng JSON với các trường sau:
+Bạn là một AI chuyên phân tích CV. Hãy trích xuất CHÍNH XÁC thông tin từ CV này và trả về dưới dạng JSON với các trường sau:
 {
   ""name"": ""Tên sinh viên"",
   ""gpa"": ""Điểm GPA hoặc điểm trung bình"",
-  ""skills"": ""Các kỹ năng (ngăn cách bằng dấu phẩy)"",
-  ""achievements"": ""Các thành tích, giải thưởng"",
+  ""skills"": ""Các kỹ năng, ngăn cách bằng dấu phẩy. Ví dụ: Python, Java, React"",
+  ""achievements"": ""Các thành tích, giải thưởng, ngăn cách bằng dấu phẩy. Ví dụ: Giải nhất Olympic Tin học, GPA cao"",
   ""yearOfStudy"": ""Năm học hiện tại hoặc năm tốt nghiệp"",
   ""major"": ""Chuyên ngành"",
-  ""languages"": ""Ngôn ngữ (ví dụ: Tiếng Anh, Tiếng Việt)"",
-  ""certifications"": ""Các chứng chỉ"",
-  ""experiences"": ""Kinh nghiệm làm việc/thực tập"",
-  ""projects"": ""Các dự án đã thực hiện""
+  ""languages"": ""Ngôn ngữ, ngăn cách bằng dấu phẩy. Ví dụ: Tiếng Anh (IELTS 7.5), Tiếng Việt"",
+  ""certifications"": ""Các chứng chỉ, ngăn cách bằng dấu phẩy. Ví dụ: AWS Certified, Google Cloud Certified"",
+  ""experiences"": ""Kinh nghiệm làm việc/thực tập, ngăn cách bằng dấu phẩy. Ví dụ: Thực tập FPT Software (6 tháng), Dev Intern tại ABC Company"",
+  ""projects"": ""Các dự án đã thực hiện, ngăn cách bằng dấu phẩy. Ví dụ: Website thương mại điện tử, App quản lý sinh viên""
 }
 
-Nếu không tìm thấy thông tin nào, để giá trị null. CHỈ trả về JSON, không thêm text giải thích.";
+QUY TẮC QUAN TRỌNG:
+1. CHỈ trích xuất thông tin CÓ SẴN trong CV, KHÔNG ĐƯỢC tự bịa đặt hoặc suy đoán.
+2. Nếu KHÔNG TÌM THẤY thông tin cho trường nào, BẮT BUỘC để giá trị null.
+3. TẤT CẢ các trường phải là STRING và các giá trị trong mỗi trường ngăn cách bằng dấu phẩy.
+4. CHỈ trả về JSON thuần túy, KHÔNG thêm text giải thích, comment hay markdown.
+5. KHÔNG được thêm thông tin ngoài những gì có trong CV.";
 
                 var requestBody = new
                 {

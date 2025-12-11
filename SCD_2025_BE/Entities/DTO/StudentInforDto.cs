@@ -8,8 +8,6 @@ namespace SCD_2025_BE.Entities.DTO
         [StringLength(100, ErrorMessage = "Tên tối đa 100 ký tự.")]
         public string Name { get; set; }
 
-        public string? ResumeUrl { get; set; }
-
         [RegularExpression(@"^\d+(\.\d+)?$", ErrorMessage = "GPA phải là số.")]
         public string? GPA { get; set; }
 

@@ -124,34 +124,103 @@ namespace SCD_2025_BE.Controllers
 
         [HttpPost]
         [Authorize(Roles = "Student")]
-        public async Task<ActionResult<StudentInforResponseDto>> CreateStudentInfor(StudentInforDto studentDto)
+        [Consumes("multipart/form-data")]
+        public async Task<ActionResult<StudentInforResponseDto>> CreateStudentInfor([FromForm] StudentInforDto studentDto, IFormFile? resumeFile = null)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             var existingStudent = await _unitOfWork.StudentInfors.GetByUserIdAsync(userId);
 
+            // Nếu đã có hồ sơ, chuyển sang update
             if (existingStudent != null)
             {
-                return BadRequest(new { Message = "Bạn đã tạo hồ sơ sinh viên rồi." });
+                return await UpdateExistingStudent(existingStudent, studentDto, resumeFile, userId);
             }
 
-            var student = new StudentInfor
+            // Xử lý file upload
+            string? resumeUrl = null;
+            byte[]? pdfBytes = null;
+            
+            if (resumeFile != null)
             {
-                UserId = userId,
-                Name = studentDto.Name,
-                ResumeUrl = studentDto.ResumeUrl,
-                GPA = studentDto.GPA,
-                Skills = studentDto.Skills,
-                Archievements = studentDto.Archievements,
-                YearOfStudy = studentDto.YearOfStudy,
-                Major = studentDto.Major,
-                Languages = studentDto.Languages,
-                Certifications = studentDto.Certifications,
-                Experiences = studentDto.Experiences,
-                Projects = studentDto.Projects,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedBy = userId
-            };
+                // Kiểm tra file có phải là PDF không
+                if (resumeFile.ContentType != "application/pdf")
+                {
+                    return BadRequest(new { Message = "Chỉ chấp nhận file PDF cho CV." });
+                }
+
+                // Kiểm tra kích thước file (giới hạn 5MB)
+                if (resumeFile.Length > 5 * 1024 * 1024)
+                {
+                    return BadRequest(new { Message = "File CV không được vượt quá 5MB." });
+                }
+
+                // Đọc file thành bytes để gửi cho AI
+                using (var memoryStream = new MemoryStream())
+                {
+                    await resumeFile.CopyToAsync(memoryStream);
+                    pdfBytes = memoryStream.ToArray();
+                }
+
+                // Tạo thư mục lưu trữ nếu chưa tồn tại
+                var uploadFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "resumes");
+                if (!Directory.Exists(uploadFolder))
+                {
+                    Directory.CreateDirectory(uploadFolder);
+                }
+
+                // Tạo tên file duy nhất
+                var fileName = $"{userId}_{Guid.NewGuid()}{Path.GetExtension(resumeFile.FileName)}";
+                var filePath = Path.Combine(uploadFolder, fileName);
+
+                // Lưu file
+                await System.IO.File.WriteAllBytesAsync(filePath, pdfBytes);
+
+                resumeUrl = $"/resumes/{fileName}";
+            }
+
+            StudentInfor student;
+
+            // Nếu có file PDF, dùng AI phân tích CV
+            if (pdfBytes != null)
+            {
+                // Phân tích CV bằng AI
+                student = await _geminiService.ClassifyStudentCV(pdfBytes);
+                
+                if (student == null)
+                {
+                    return BadRequest(new { Message = "Không thể phân tích CV. Vui lòng thử lại." });
+                }
+
+                // Gán thông tin bổ sung
+                student.UserId = userId;
+                student.ResumeUrl = resumeUrl;
+                student.CreatedAt = DateTime.UtcNow;
+                student.UpdatedBy = userId;
+                
+                // Khi có PDF, sử dụng hoàn toàn dữ liệu từ AI, không ghi đè từ DTO
+            }
+            else
+            {
+                // Không có file PDF, tạo từ form data
+                student = new StudentInfor
+                {
+                    UserId = userId,
+                    Name = studentDto.Name,
+                    ResumeUrl = resumeUrl,
+                    GPA = studentDto.GPA,
+                    Skills = studentDto.Skills,
+                    Archievements = studentDto.Archievements,
+                    YearOfStudy = studentDto.YearOfStudy,
+                    Major = studentDto.Major,
+                    Languages = studentDto.Languages,
+                    Certifications = studentDto.Certifications,
+                    Experiences = studentDto.Experiences,
+                    Projects = studentDto.Projects,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedBy = userId
+                };
+            }
 
             // Tạo embedding cho student
             student.EmBeddings = await _geminiService.GetStudentEmbedding(student);
@@ -182,45 +251,125 @@ namespace SCD_2025_BE.Controllers
             return CreatedAtAction(nameof(GetStudentInfor), new { id = student.Id }, response);
         }
 
-        [HttpPut("{id}")]
-        [Authorize(Roles = "Student")]
-        public async Task<IActionResult> UpdateStudentInfor(int id, StudentInforDto studentDto)
+        private async Task<ActionResult<StudentInforResponseDto>> UpdateExistingStudent(StudentInfor student, StudentInforDto studentDto, IFormFile? resumeFile, string userId)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            byte[]? pdfBytes = null;
 
-            var student = await _unitOfWork.StudentInfors.GetByIdAsync(id);
-
-            if (student == null || student.DeletedAt != null)
+            // Xử lý file upload nếu có
+            if (resumeFile != null)
             {
-                return NotFound(new { Message = "Không tìm thấy thông tin sinh viên." });
+                // Kiểm tra file có phải là PDF không
+                if (resumeFile.ContentType != "application/pdf")
+                {
+                    return BadRequest(new { Message = "Chỉ chấp nhận file PDF cho CV." });
+                }
+
+                // Kiểm tra kích thước file (giới hạn 5MB)
+                if (resumeFile.Length > 5 * 1024 * 1024)
+                {
+                    return BadRequest(new { Message = "File CV không được vượt quá 5MB." });
+                }
+
+                // Đọc file thành bytes
+                using (var memoryStream = new MemoryStream())
+                {
+                    await resumeFile.CopyToAsync(memoryStream);
+                    pdfBytes = memoryStream.ToArray();
+                }
+
+                // Xóa file cũ nếu tồn tại
+                if (!string.IsNullOrEmpty(student.ResumeUrl))
+                {
+                    var oldFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", student.ResumeUrl.TrimStart('/'));
+                    if (System.IO.File.Exists(oldFilePath))
+                    {
+                        System.IO.File.Delete(oldFilePath);
+                    }
+                }
+
+                // Tạo thư mục lưu trữ nếu chưa tồn tại
+                var uploadFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "resumes");
+                if (!Directory.Exists(uploadFolder))
+                {
+                    Directory.CreateDirectory(uploadFolder);
+                }
+
+                // Tạo tên file duy nhất
+                var fileName = $"{userId}_{Guid.NewGuid()}{Path.GetExtension(resumeFile.FileName)}";
+                var filePath = Path.Combine(uploadFolder, fileName);
+
+                // Lưu file
+                await System.IO.File.WriteAllBytesAsync(filePath, pdfBytes);
+
+                student.ResumeUrl = $"/resumes/{fileName}";
+
+                // Nếu có PDF, phân tích CV bằng AI và thay thế hoàn toàn
+                var aiStudent = await _geminiService.ClassifyStudentCV(pdfBytes);
+                if (aiStudent != null)
+                {
+                    // Thay thế hoàn toàn bằng dữ liệu từ AI
+                    student.Name = aiStudent.Name ?? student.Name;
+                    student.GPA = aiStudent.GPA;
+                    student.Skills = aiStudent.Skills;
+                    student.Archievements = aiStudent.Archievements;
+                    student.YearOfStudy = aiStudent.YearOfStudy;
+                    student.Major = aiStudent.Major;
+                    student.Languages = aiStudent.Languages;
+                    student.Certifications = aiStudent.Certifications;
+                    student.Experiences = aiStudent.Experiences;
+                    student.Projects = aiStudent.Projects;
+                }
+            }
+            else
+            {
+                // Không có PDF, chỉ update các field có giá trị từ DTO
+                if (!string.IsNullOrEmpty(studentDto.Name)) student.Name = studentDto.Name;
+                if (!string.IsNullOrEmpty(studentDto.GPA)) student.GPA = studentDto.GPA;
+                if (!string.IsNullOrEmpty(studentDto.Skills)) student.Skills = studentDto.Skills;
+                if (!string.IsNullOrEmpty(studentDto.Archievements)) student.Archievements = studentDto.Archievements;
+                if (!string.IsNullOrEmpty(studentDto.YearOfStudy)) student.YearOfStudy = studentDto.YearOfStudy;
+                if (!string.IsNullOrEmpty(studentDto.Major)) student.Major = studentDto.Major;
+                if (!string.IsNullOrEmpty(studentDto.Languages)) student.Languages = studentDto.Languages;
+                if (!string.IsNullOrEmpty(studentDto.Certifications)) student.Certifications = studentDto.Certifications;
+                if (!string.IsNullOrEmpty(studentDto.Experiences)) student.Experiences = studentDto.Experiences;
+                if (!string.IsNullOrEmpty(studentDto.Projects)) student.Projects = studentDto.Projects;
             }
 
-            if (student.UserId != userId)
-            {
-                return Forbid();
-            }
-
-            student.Name = studentDto.Name;
-            student.ResumeUrl = studentDto.ResumeUrl;
-            student.GPA = studentDto.GPA;
-            student.Skills = studentDto.Skills;
-            student.Archievements = studentDto.Archievements;
-            student.YearOfStudy = studentDto.YearOfStudy;
-            student.Major = studentDto.Major;
-            student.Languages = studentDto.Languages;
-            student.Certifications = studentDto.Certifications;
-            student.Experiences = studentDto.Experiences;
-            student.Projects = studentDto.Projects;
             student.UpdatedAt = DateTime.UtcNow;
             student.UpdatedBy = userId;
 
             // Cập nhật lại embedding
             student.EmBeddings = await _geminiService.GetStudentEmbedding(student);
 
+            // Debug logging
+            Console.WriteLine($"Updating student ID: {student.Id}, Name: {student.Name}");
+            
             _unitOfWork.StudentInfors.Update(student);
-            await _unitOfWork.SaveChangesAsync();
+            var saveResult = await _unitOfWork.SaveChangesAsync();
+            
+            Console.WriteLine($"Save result: {saveResult} records affected");
 
-            return NoContent();
+            var response = new StudentInforResponseDto
+            {
+                Id = student.Id,
+                UserId = student.UserId,
+                Name = student.Name,
+                ResumeUrl = student.ResumeUrl,
+                GPA = student.GPA,
+                Skills = student.Skills,
+                Archievements = student.Archievements,
+                YearOfStudy = student.YearOfStudy,
+                Major = student.Major,
+                Languages = student.Languages,
+                Certifications = student.Certifications,
+                Experiences = student.Experiences,
+                Projects = student.Projects,
+                UpdatedBy = student.UpdatedBy,
+                CreatedAt = student.CreatedAt,
+                UpdatedAt = student.UpdatedAt
+            };
+
+            return Ok(response);
         }
 
         [HttpDelete("{id}")]
