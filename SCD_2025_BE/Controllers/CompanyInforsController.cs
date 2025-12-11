@@ -34,7 +34,6 @@ namespace SCD_2025_BE.Controllers
                 CompanyWebsite = c.CompanyWebsite,
                 LogoUrl = c.LogoUrl,
                 Location = c.Location,
-                Description = c.Description,
                 UpdatedBy = c.UpdatedBy,
                 CreatedAt = c.CreatedAt,
                 UpdatedAt = c.UpdatedAt
@@ -63,7 +62,6 @@ namespace SCD_2025_BE.Controllers
                 CompanyWebsite = company.CompanyWebsite,
                 LogoUrl = company.LogoUrl,
                 Location = company.Location,
-                Description = company.Description,
                 UpdatedBy = company.UpdatedBy,
                 CreatedAt = company.CreatedAt,
                 UpdatedAt = company.UpdatedAt
@@ -94,7 +92,6 @@ namespace SCD_2025_BE.Controllers
                 CompanyWebsite = company.CompanyWebsite,
                 LogoUrl = company.LogoUrl,
                 Location = company.Location,
-                Description = company.Description,
                 UpdatedBy = company.UpdatedBy,
                 CreatedAt = company.CreatedAt,
                 UpdatedAt = company.UpdatedAt
@@ -169,7 +166,6 @@ namespace SCD_2025_BE.Controllers
                 CompanyWebsite = companyDto.CompanyWebsite,
                 LogoUrl = logoUrl,
                 Location = companyDto.Location,
-                Description = companyDto.Description,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedBy = userId
             };
@@ -186,7 +182,6 @@ namespace SCD_2025_BE.Controllers
                 CompanyWebsite = company.CompanyWebsite,
                 LogoUrl = company.LogoUrl,
                 Location = company.Location,
-                Description = company.Description,
                 UpdatedBy = company.UpdatedBy,
                 CreatedAt = company.CreatedAt,
                 UpdatedAt = company.UpdatedAt
@@ -285,7 +280,6 @@ namespace SCD_2025_BE.Controllers
             company.Descriptions = companyDto.Descriptions;
             company.CompanyWebsite = companyDto.CompanyWebsite;
             company.Location = companyDto.Location;
-            company.Description = companyDto.Description;
             company.UpdatedAt = DateTime.UtcNow;
             company.UpdatedBy = userId;
 
@@ -301,7 +295,6 @@ namespace SCD_2025_BE.Controllers
                 CompanyWebsite = company.CompanyWebsite,
                 LogoUrl = company.LogoUrl,
                 Location = company.Location,
-                Description = company.Description,
                 UpdatedBy = company.UpdatedBy,
                 CreatedAt = company.CreatedAt,
                 UpdatedAt = company.UpdatedAt

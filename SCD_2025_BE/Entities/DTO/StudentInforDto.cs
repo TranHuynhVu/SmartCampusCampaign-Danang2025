@@ -22,6 +22,7 @@ namespace SCD_2025_BE.Entities.DTO
         public string? Certifications { get; set; }
         public string? Experiences { get; set; }
         public string? Projects { get; set; }
+        public string? Educations { get; set; }
     }
 
     public class StudentInforResponseDto
@@ -39,6 +40,7 @@ namespace SCD_2025_BE.Entities.DTO
         public string? Certifications { get; set; }
         public string? Experiences { get; set; }
         public string? Projects { get; set; }
+        public string? Educations { get; set; }
         public string? UpdatedBy { get; set; }
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }

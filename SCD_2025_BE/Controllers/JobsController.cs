@@ -341,6 +341,7 @@ namespace SCD_2025_BE.Controllers
                     Certifications = student.Certifications,
                     Experiences = student.Experiences,
                     Projects = student.Projects,
+                    Educations = student.Educations,
                     UpdatedBy = student.UpdatedBy,
                     CreatedAt = student.CreatedAt,
                     UpdatedAt = student.UpdatedAt,

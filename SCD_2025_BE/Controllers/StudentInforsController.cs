@@ -44,6 +44,7 @@ namespace SCD_2025_BE.Controllers
                 Certifications = s.Certifications,
                 Experiences = s.Experiences,
                 Projects = s.Projects,
+                Educations = s.Educations,
                 UpdatedBy = s.UpdatedBy,
                 CreatedAt = s.CreatedAt,
                 UpdatedAt = s.UpdatedAt
@@ -114,6 +115,7 @@ namespace SCD_2025_BE.Controllers
                 Certifications = student.Certifications,
                 Experiences = student.Experiences,
                 Projects = student.Projects,
+                Educations = student.Educations,
                 UpdatedBy = student.UpdatedBy,
                 CreatedAt = student.CreatedAt,
                 UpdatedAt = student.UpdatedAt
@@ -217,6 +219,7 @@ namespace SCD_2025_BE.Controllers
                     Certifications = studentDto.Certifications,
                     Experiences = studentDto.Experiences,
                     Projects = studentDto.Projects,
+                    Educations = studentDto.Educations,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedBy = userId
                 };
@@ -243,6 +246,7 @@ namespace SCD_2025_BE.Controllers
                 Certifications = student.Certifications,
                 Experiences = student.Experiences,
                 Projects = student.Projects,
+                Educations = student.Educations,
                 UpdatedBy = student.UpdatedBy,
                 CreatedAt = student.CreatedAt,
                 UpdatedAt = student.UpdatedAt
@@ -318,6 +322,7 @@ namespace SCD_2025_BE.Controllers
                     student.Certifications = aiStudent.Certifications;
                     student.Experiences = aiStudent.Experiences;
                     student.Projects = aiStudent.Projects;
+                    student.Educations = aiStudent.Educations;
                 }
             }
             else
@@ -333,6 +338,7 @@ namespace SCD_2025_BE.Controllers
                 if (!string.IsNullOrEmpty(studentDto.Certifications)) student.Certifications = studentDto.Certifications;
                 if (!string.IsNullOrEmpty(studentDto.Experiences)) student.Experiences = studentDto.Experiences;
                 if (!string.IsNullOrEmpty(studentDto.Projects)) student.Projects = studentDto.Projects;
+                if (!string.IsNullOrEmpty(studentDto.Educations)) student.Educations = studentDto.Educations;
             }
 
             student.UpdatedAt = DateTime.UtcNow;
@@ -364,6 +370,7 @@ namespace SCD_2025_BE.Controllers
                 Certifications = student.Certifications,
                 Experiences = student.Experiences,
                 Projects = student.Projects,
+                Educations = student.Educations,
                 UpdatedBy = student.UpdatedBy,
                 CreatedAt = student.CreatedAt,
                 UpdatedAt = student.UpdatedAt

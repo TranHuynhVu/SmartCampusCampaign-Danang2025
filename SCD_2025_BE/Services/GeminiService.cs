@@ -43,7 +43,8 @@ Bạn là một AI chuyên phân tích CV. Hãy trích xuất CHÍNH XÁC thông
   ""languages"": ""Ngôn ngữ, ngăn cách bằng dấu phẩy. Ví dụ: Tiếng Anh (IELTS 7.5), Tiếng Việt"",
   ""certifications"": ""Các chứng chỉ, ngăn cách bằng dấu phẩy. Ví dụ: AWS Certified, Google Cloud Certified"",
   ""experiences"": ""Kinh nghiệm làm việc/thực tập, ngăn cách bằng dấu phẩy. Ví dụ: Thực tập FPT Software (6 tháng), Dev Intern tại ABC Company"",
-  ""projects"": ""Các dự án đã thực hiện, ngăn cách bằng dấu phẩy. Ví dụ: Website thương mại điện tử, App quản lý sinh viên""
+  ""projects"": ""Các dự án đã thực hiện, ngăn cách bằng dấu phẩy. Ví dụ: Website thương mại điện tử, App quản lý sinh viên"",
+  ""educations"": ""Thông tin học vấn, ngăn cách bằng dấu phẩy. Ví dụ: Đại học Bách Khoa Đà Nẵng (2020-2024), THPT Trần Phú (2017-2020)""
 }
 
 QUY TẮC QUAN TRỌNG:
@@ -133,6 +134,7 @@ QUY TẮC QUAN TRỌNG:
                     Certifications = cvData.Certifications,
                     Experiences = cvData.Experiences,
                     Projects = cvData.Projects,
+                    Educations = cvData.Educations,
                     CreatedAt = DateTime.UtcNow
                 };
             }
@@ -340,6 +342,9 @@ QUY TẮC QUAN TRỌNG:
 
             [JsonPropertyName("projects")]
             public string? Projects { get; set; }
+
+            [JsonPropertyName("educations")]
+            public string? Educations { get; set; }
         }
     }
 }

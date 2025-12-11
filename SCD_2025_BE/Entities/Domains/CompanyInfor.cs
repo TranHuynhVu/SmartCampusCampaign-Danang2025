@@ -14,7 +14,6 @@ public class CompanyInfor
     public string? CompanyWebsite { get; set; }
     public string? LogoUrl { get; set; }
     public string? Location { get; set; }
-    public string? Description { get; set; }
     public string? UpdatedBy { get; set; }
     public DateTime? CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }

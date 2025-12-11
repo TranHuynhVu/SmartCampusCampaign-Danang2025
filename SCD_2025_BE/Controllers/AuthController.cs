@@ -17,12 +17,14 @@ namespace SCD_2025_BE.Controllers
         private readonly UserManager<AppUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly ITokenReposity _tokenRepository;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public AuthController(UserManager<AppUser> userManager, RoleManager<IdentityRole> roleManager, ITokenReposity token)
+        public AuthController(UserManager<AppUser> userManager, RoleManager<IdentityRole> roleManager, ITokenReposity token, IUnitOfWork unitOfWork)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _tokenRepository = token;
+            _unitOfWork = unitOfWork;
         }
 
         [HttpPost]
@@ -149,6 +151,99 @@ namespace SCD_2025_BE.Controllers
         public async Task<IActionResult> Test()
         {
             return Ok("API is working!");
+        }
+
+        [HttpPost]
+        [Route("RegisterStudent")]
+        public async Task<IActionResult> RegisterStudent([FromBody] RegisterStudentDto requestDto)
+        {
+            // Tạo user
+            var user = new AppUser
+            {
+                UserName = requestDto.Email,
+                Email = requestDto.Email,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            var result = await _userManager.CreateAsync(user, requestDto.Password);
+
+            if (!result.Succeeded)
+            {
+                return BadRequest(new { Message = "Không thể tạo tài khoản.", Errors = result.Errors });
+            }
+
+            // Tạo và gán role Student
+            if (!await _roleManager.RoleExistsAsync("Student"))
+            {
+                await _roleManager.CreateAsync(new IdentityRole("Student"));
+            }
+            await _userManager.AddToRoleAsync(user, "Student");
+
+            // Tạo StudentInfor
+            var studentInfor = new StudentInfor
+            {
+                UserId = user.Id,
+                Name = requestDto.Name,
+                GPA = requestDto.GPA,
+                Skills = requestDto.Skills,
+                Archievements = requestDto.Archievements,
+                YearOfStudy = requestDto.YearOfStudy,
+                Major = requestDto.Major,
+                Languages = requestDto.Languages,
+                Certifications = requestDto.Certifications,
+                Experiences = requestDto.Experiences,
+                Projects = requestDto.Projects,
+                Educations = requestDto.Educations,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await _unitOfWork.StudentInfors.AddAsync(studentInfor);
+            await _unitOfWork.SaveChangesAsync();
+
+            return Ok(new { Message = "Đăng ký sinh viên thành công.", UserId = user.Id });
+        }
+
+        [HttpPost]
+        [Route("RegisterCompany")]
+        public async Task<IActionResult> RegisterCompany([FromBody] RegisterCompanyDto requestDto)
+        {
+            // Tạo user
+            var user = new AppUser
+            {
+                UserName = requestDto.Email,
+                Email = requestDto.Email,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            var result = await _userManager.CreateAsync(user, requestDto.Password);
+
+            if (!result.Succeeded)
+            {
+                return BadRequest(new { Message = "Không thể tạo tài khoản.", Errors = result.Errors });
+            }
+
+            // Tạo và gán role Company
+            if (!await _roleManager.RoleExistsAsync("Company"))
+            {
+                await _roleManager.CreateAsync(new IdentityRole("Company"));
+            }
+            await _userManager.AddToRoleAsync(user, "Company");
+
+            // Tạo CompanyInfor
+            var companyInfor = new CompanyInfor
+            {
+                UserId = user.Id,
+                CompanyName = requestDto.CompanyName,
+                CompanyWebsite = requestDto.CompanyWebsite,
+                Location = requestDto.Location,
+                Descriptions = requestDto.Descriptions,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await _unitOfWork.CompanyInfors.AddAsync(companyInfor);
+            await _unitOfWork.SaveChangesAsync();
+
+            return Ok(new { Message = "Đăng ký công ty thành công.", UserId = user.Id });
         }
 
     }

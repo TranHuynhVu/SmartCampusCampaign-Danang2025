@@ -20,6 +20,7 @@ public class StudentInfor
     public string? Certifications { get; set; }
     public string? Experiences { get; set; }
     public string? Projects { get; set; }
+    public string? Educations  { get; set; }
     public string? EmBeddings { get; set; }
     public string? UpdatedBy { get; set; }
     public DateTime? CreatedAt { get; set; }
