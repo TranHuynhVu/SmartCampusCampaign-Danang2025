@@ -23,6 +23,7 @@ namespace SCD_2025_BE.Entities.DTO
         public string? Experiences { get; set; }
         public string? Projects { get; set; }
         public string? Educations { get; set; }
+        public bool? OpenToWork { get; set; }
     }
 
     public class StudentInforResponseDto
@@ -41,6 +42,8 @@ namespace SCD_2025_BE.Entities.DTO
         public string? Experiences { get; set; }
         public string? Projects { get; set; }
         public string? Educations { get; set; }
+        public string? AvatarUrl { get; set; }
+        public bool? OpenToWork { get; set; }
         public string? UpdatedBy { get; set; }
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }

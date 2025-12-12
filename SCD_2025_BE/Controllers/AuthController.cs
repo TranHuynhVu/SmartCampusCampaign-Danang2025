@@ -309,6 +309,7 @@ namespace SCD_2025_BE.Controllers
 
             // Gán UserId và các thông tin khác
             studentInfor.UserId = user.Id;
+            studentInfor.OpenToWork = true; // Mặc định OpenToWork = true
             studentInfor.CreatedAt = DateTime.UtcNow;
             
             // Lưu đường dẫn resume nếu có

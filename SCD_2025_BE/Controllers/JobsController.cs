@@ -310,8 +310,9 @@ namespace SCD_2025_BE.Controllers
                 return BadRequest(new { Message = "Embedding không hợp lệ." });
             }
 
-            // Lấy tất cả students đang active
-            var students = await _unitOfWork.StudentInfors.GetActiveStudentsAsync();
+            // Lấy tất cả students đang active VÀ OpenToWork = true
+            var allStudents = await _unitOfWork.StudentInfors.GetActiveStudentsAsync();
+            var students = allStudents.Where(s => s.OpenToWork == true).ToList();
 
             var candidateSuggestions = new List<CandidateSuggestionDto>();
 
@@ -342,6 +343,8 @@ namespace SCD_2025_BE.Controllers
                     Experiences = student.Experiences,
                     Projects = student.Projects,
                     Educations = student.Educations,
+                    AvatarUrl = student.AvatarUrl,
+                    OpenToWork = student.OpenToWork,
                     UpdatedBy = student.UpdatedBy,
                     CreatedAt = student.CreatedAt,
                     UpdatedAt = student.UpdatedAt,

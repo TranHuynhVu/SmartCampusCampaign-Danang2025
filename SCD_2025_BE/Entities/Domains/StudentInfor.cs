@@ -27,4 +27,6 @@ public class StudentInfor
     public DateTime? UpdatedAt { get; set; }
     public DateTime? DeletedAt { get; set; }
     public AppUser User { get; set; }
+    public string ? AvatarUrl { get; set; }
+    public bool? OpenToWork { get; set; }
 }

@@ -6,27 +6,22 @@ namespace SCD_2025_BE.Entities.DTO
     {
         [Required(ErrorMessage = "Job ID không được để trống.")]
         public int JobId { get; set; }
-
-        [Required(ErrorMessage = "Trạng thái không được để trống.")]
-        [RegularExpression("^(Applied|Reviewing|Accepted|Rejected|Withdrawn)$", 
-            ErrorMessage = "Trạng thái phải là Applied, Reviewing, Accepted, Rejected hoặc Withdrawn.")]
-        public string Status { get; set; }
     }
 
-    public class CompanyRecruitDto
+    public class CompanyInvitationDto
     {
-        [Required(ErrorMessage = "User ID không được để trống.")]
-        public string UserId { get; set; }
+        [Required(ErrorMessage = "Student User ID không được để trống.")]
+        public string StudentUserId { get; set; }
 
         [Required(ErrorMessage = "Job ID không được để trống.")]
         public int JobId { get; set; }
     }
 
-    public class UserJobUpdateDto
+    public class UserJobResponseStatusDto
     {
         [Required(ErrorMessage = "Trạng thái không được để trống.")]
-        [RegularExpression("^(Applied|Reviewing|Accepted|Rejected|Withdrawn)$", 
-            ErrorMessage = "Trạng thái phải là Applied, Reviewing, Accepted, Rejected hoặc Withdrawn.")]
+        [RegularExpression("^(Accepted|Rejected)$", 
+            ErrorMessage = "Trạng thái phải là Accepted hoặc Rejected.")]
         public string Status { get; set; }
     }
 
@@ -34,9 +29,12 @@ namespace SCD_2025_BE.Entities.DTO
     {
         public int Id { get; set; }
         public string UserId { get; set; }
+        public string? StudentName { get; set; }
+        public string? StudentAvatar { get; set; }
         public int JobId { get; set; }
         public string? JobTitle { get; set; }
         public string? CompanyName { get; set; }
+        public string? Type { get; set; }
         public string Status { get; set; }
         public string? UpdatedBy { get; set; }
         public DateTime? CreatedAt { get; set; }

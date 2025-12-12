@@ -18,4 +18,5 @@ public class UserJob
     public DateTime? DeletedAt { get; set; }
     public AppUser User { get; set; }
     public Job Job { get; set; }
+    public string? Type { get; set; }
 }

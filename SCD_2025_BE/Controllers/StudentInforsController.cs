@@ -45,6 +45,8 @@ namespace SCD_2025_BE.Controllers
                 Experiences = s.Experiences,
                 Projects = s.Projects,
                 Educations = s.Educations,
+                AvatarUrl = s.AvatarUrl,
+                OpenToWork = s.OpenToWork,
                 UpdatedBy = s.UpdatedBy,
                 CreatedAt = s.CreatedAt,
                 UpdatedAt = s.UpdatedAt
@@ -79,6 +81,9 @@ namespace SCD_2025_BE.Controllers
                 Certifications = student.Certifications,
                 Experiences = student.Experiences,
                 Projects = student.Projects,
+                Educations = student.Educations,
+                AvatarUrl = student.AvatarUrl,
+                OpenToWork = student.OpenToWork,
                 UpdatedBy = student.UpdatedBy,
                 CreatedAt = student.CreatedAt,
                 UpdatedAt = student.UpdatedAt
@@ -116,6 +121,8 @@ namespace SCD_2025_BE.Controllers
                 Experiences = student.Experiences,
                 Projects = student.Projects,
                 Educations = student.Educations,
+                AvatarUrl = student.AvatarUrl,
+                OpenToWork = student.OpenToWork,
                 UpdatedBy = student.UpdatedBy,
                 CreatedAt = student.CreatedAt,
                 UpdatedAt = student.UpdatedAt
@@ -220,6 +227,7 @@ namespace SCD_2025_BE.Controllers
                     Experiences = studentDto.Experiences,
                     Projects = studentDto.Projects,
                     Educations = studentDto.Educations,
+                    OpenToWork = studentDto.OpenToWork ?? true,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedBy = userId
                 };
@@ -247,6 +255,8 @@ namespace SCD_2025_BE.Controllers
                 Experiences = student.Experiences,
                 Projects = student.Projects,
                 Educations = student.Educations,
+                AvatarUrl = student.AvatarUrl,
+                OpenToWork = student.OpenToWork,
                 UpdatedBy = student.UpdatedBy,
                 CreatedAt = student.CreatedAt,
                 UpdatedAt = student.UpdatedAt
