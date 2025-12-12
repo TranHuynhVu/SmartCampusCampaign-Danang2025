@@ -1,38 +1,38 @@
-# UserJob API Documentation
+﻿# UserJob API Documentation
 
-## ?? T?ng quan
+## 📋 Tổng quan
 
-API UserJobs h? tr? **hai lu?ng nghi?p v? ch�nh**:
-1. **Student Apply** - Sinh vi�n n?p ??n ?ng tuy?n v�o c�ng vi?c
-2. **Company Recruit** - C�ng ty m?i ?ng vi�n l�m vi?c
+API UserJobs hỗ trợ **hai luồng nghiệp vụ chính**:
+1. **Student Apply** - Sinh viên nộp đơn ứng tuyển vào công việc
+2. **Company Recruit** - Công ty mời ứng viên làm việc
 
 **Base URL:** `/api/UserJobs`
 
 ---
 
-## ?? Status Flow (Lu?ng tr?ng th�i)
+## 🔄 Status Flow (Luồng trạng thái)
 
 ### Status Values:
-| Status | � ngh?a |
+| Status | Ý nghĩa |
 |--------|---------|
-| **Applied** | ??n ?� ???c t?o (Student apply ho?c Company invite) |
-| **Reviewing** | ?ang ???c xem x�t b?i b�n ??i di?n |
-| **Accepted** | ?� ch?p nh?n (FINAL STATE) |
-| **Rejected** | ?� t? ch?i (FINAL STATE) |
-| **Withdrawn** | ?� r�t l?i (FINAL STATE) |
+| **Applied** | Đơn đã được tạo (Student apply hoặc Company invite) |
+| **Reviewing** | Đang được xem xét bởi bên đối diện |
+| **Accepted** | Đã chấp nhận (FINAL STATE) |
+| **Rejected** | Đã từ chối (FINAL STATE) |
+| **Withdrawn** | Đã rút lại (FINAL STATE) |
 
 ### Status Transitions:
 ```
-Applied ? Reviewing ? Accepted/Rejected
-   ?
+Applied → Reviewing → Accepted/Rejected
+   ↓
 Withdrawn
 ```
 
 ---
 
-## ?? LU?NG 1: STUDENT APPLY
+## 🎓 LUỒNG 1: STUDENT APPLY
 
-### 1.1 Student xem danh s�ch c�ng vi?c g?i �
+### 1.1 Student xem danh sách công việc gợi ý
 ```http
 GET /api/StudentInfors/JobSuggestions/{studentInforId}?top=10
 Authorization: Bearer {student_token}
@@ -52,7 +52,7 @@ Authorization: Bearer {student_token}
 
 ---
 
-### 1.2 Student n?p ??n ?ng tuy?n
+### 1.2 Student nộp đơn ứng tuyển
 ```http
 POST /api/UserJobs
 Authorization: Bearer {student_token}
@@ -83,12 +83,12 @@ Content-Type: application/json
 ```
 
 **Notes:**
-- Status t? ??ng set th�nh `"Applied"`
-- `updatedBy` = Student UserId (?�nh d?u Student l� ng??i t?o)
+- Status tự động set thành `"Applied"`
+- `updatedBy` = Student UserId (đánh dấu Student là người tạo)
 
 ---
 
-### 1.3 Student xem danh s�ch ??n ?� n?p
+### 1.3 Student xem danh sách đơn đã nộp
 ```http
 GET /api/UserJobs/MyApplications
 Authorization: Bearer {student_token}
@@ -112,12 +112,12 @@ Authorization: Bearer {student_token}
 ```
 
 **Notes:**
-- Ch? hi?n th? c�c ??n m� Student l� ng??i t?o
-- Logic: `userId == updatedBy` t?i th?i ?i?m t?o
+- Chỉ hiển thị các đơn mà Student là người tạo
+- Logic: `userId == updatedBy` tại thời điểm tạo
 
 ---
 
-### 1.4 Student r�t ??n ?ng tuy?n
+### 1.4 Student rút đơn ứng tuyển
 ```http
 PUT /api/UserJobs/{id}
 Authorization: Bearer {student_token}
@@ -142,13 +142,13 @@ Content-Type: application/json
 ```
 
 **Business Rules:**
-- Ch? Student t?o ??n m?i c� quy?n r�t
-- C� th? r�t khi Status = `Applied` ho?c `Reviewing`
-- Kh�ng th? r�t khi Status = `Accepted`, `Rejected`, `Withdrawn`
+- Chỉ Student tạo đơn mới có quyền rút
+- Có thể rút khi Status = `Applied` hoặc `Reviewing`
+- Không thể rút khi Status = `Accepted`, `Rejected`, `Withdrawn`
 
 ---
 
-### 1.5 Company xem danh s�ch ??n ?ng tuy?n
+### 1.5 Company xem danh sách đơn ứng tuyển
 ```http
 GET /api/UserJobs/JobApplications/{jobId}
 Authorization: Bearer {company_token}
@@ -172,12 +172,12 @@ Authorization: Bearer {company_token}
 ```
 
 **Authorization:**
-- Company ch? xem ???c ??n cho c�ng vi?c c?a m�nh
-- Admin xem ???c t?t c?
+- Company chỉ xem được đơn cho công việc của mình
+- Admin xem được tất cả
 
 ---
 
-### 1.6 Company chuy?n tr?ng th�i ??n th�nh Reviewing
+### 1.6 Company chuyển trạng thái đơn thành Reviewing
 ```http
 PUT /api/UserJobs/{id}
 Authorization: Bearer {company_token}
@@ -195,7 +195,7 @@ Content-Type: application/json
 
 ---
 
-### 1.7 Company ch?p nh?n ?ng vi�n
+### 1.7 Company chấp nhận ứng viên
 ```http
 PUT /api/UserJobs/{id}
 Authorization: Bearer {company_token}
@@ -220,12 +220,12 @@ Content-Type: application/json
 ```
 
 **Notes:**
-- Tr?ng th�i `Accepted` l� **FINAL STATE**
-- Kh�ng th? thay ??i sau khi Accepted
+- Trạng thái `Accepted` là **FINAL STATE**
+- Không thể thay đổi sau khi Accepted
 
 ---
 
-### 1.8 Company t? ch?i ?ng vi�n
+### 1.8 Company từ chối ứng viên
 ```http
 PUT /api/UserJobs/{id}
 Authorization: Bearer {company_token}
@@ -242,13 +242,13 @@ Content-Type: application/json
 **Response:** `200 OK`
 
 **Notes:**
-- Tr?ng th�i `Rejected` l� **FINAL STATE**
+- Trạng thái `Rejected` là **FINAL STATE**
 
 ---
 
-## ?? LU?NG 2: COMPANY RECRUIT
+## 🏢 LUỒNG 2: COMPANY RECRUIT
 
-### 2.1 Company xem danh s�ch ?ng vi�n g?i �
+### 2.1 Company xem danh sách ứng viên gợi ý
 ```http
 GET /api/Jobs/CandidateSuggestions/{jobId}?top=10
 Authorization: Bearer {company_token}
@@ -260,7 +260,7 @@ Authorization: Bearer {company_token}
   {
     "id": 1,
     "userId": "student-guid-123",
-    "name": "Nguy?n V?n A",
+    "name": "Nguyễn Văn A",
     "skills": "Python, Django, PostgreSQL",
     "gpa": "3.8",
     "major": "Computer Science",
@@ -271,7 +271,7 @@ Authorization: Bearer {company_token}
 
 ---
 
-### 2.2 Company m?i ?ng vi�n
+### 2.2 Company mời ứng viên
 ```http
 POST /api/UserJobs/InviteCandidate
 Authorization: Bearer {company_token}
@@ -302,18 +302,18 @@ Content-Type: application/json
 ```
 
 **Notes:**
-- Status t? ??ng set th�nh `"Applied"`
-- `updatedBy` = Company UserId (?�nh d?u Company l� ng??i t?o)
-- Ph�n bi?t v?i Student Apply qua `userId != updatedBy`
+- Status tự động set thành `"Applied"`
+- `updatedBy` = Company UserId (đánh dấu Company là người tạo)
+- Phân biệt với Student Apply qua `userId != updatedBy`
 
 **Validation:**
-- Company ph?i s? h?u Job
-- Student ph?i t?n t?i trong h? th?ng
-- Kh�ng ???c t?n t?i quan h? tr??c ?�
+- Company phải sở hữu Job
+- Student phải tồn tại trong hệ thống
+- Không được tồn tại quan hệ trước đó
 
 ---
 
-### 2.3 Student xem l?i m?i t? Company
+### 2.3 Student xem lời mời từ Company
 ```http
 GET /api/UserJobs/MyInvitations
 Authorization: Bearer {student_token}
@@ -337,12 +337,12 @@ Authorization: Bearer {student_token}
 ```
 
 **Notes:**
-- Ch? hi?n th? l?i m?i t? Company
-- Logic: `userId != updatedBy` t?i th?i ?i?m t?o
+- Chỉ hiển thị lời mời từ Company
+- Logic: `userId != updatedBy` tại thời điểm tạo
 
 ---
 
-### 2.4 Student chuy?n tr?ng th�i l?i m?i th�nh Reviewing
+### 2.4 Student chuyển trạng thái lời mời thành Reviewing
 ```http
 PUT /api/UserJobs/{id}
 Authorization: Bearer {student_token}
@@ -360,7 +360,7 @@ Content-Type: application/json
 
 ---
 
-### 2.5 Student ch?p nh?n l?i m?i
+### 2.5 Student chấp nhận lời mời
 ```http
 PUT /api/UserJobs/{id}
 Authorization: Bearer {student_token}
@@ -386,7 +386,7 @@ Content-Type: application/json
 
 ---
 
-### 2.6 Student t? ch?i l?i m?i
+### 2.6 Student từ chối lời mời
 ```http
 PUT /api/UserJobs/{id}
 Authorization: Bearer {student_token}
@@ -404,7 +404,7 @@ Content-Type: application/json
 
 ---
 
-### 2.7 Company r�t l?i m?i
+### 2.7 Company rút lời mời
 ```http
 PUT /api/UserJobs/{id}
 Authorization: Bearer {company_token}
@@ -421,36 +421,36 @@ Content-Type: application/json
 **Response:** `200 OK`
 
 **Business Rules:**
-- Ch? Company t?o l?i m?i m?i c� quy?n r�t
-- C� th? r�t khi Status = `Applied` ho?c `Reviewing`
+- Chỉ Company tạo lời mời mới có quyền rút
+- Có thể rút khi Status = `Applied` hoặc `Reviewing`
 
 ---
 
-## ?? API T?ng h?p
+## 📊 API Tổng hợp
 
 ### GET /api/UserJobs
 **Role:** Admin only
 
-L?y t?t c? UserJobs trong h? th?ng.
+Lấy tất cả UserJobs trong hệ thống.
 
 ---
 
 ### GET /api/UserJobs/{id}
 **Role:** Student (owner), Company (job owner), Admin
 
-L?y chi ti?t m?t UserJob.
+Lấy chi tiết một UserJob.
 
 **Authorization:**
-- Student: Ch? xem ???c UserJob c?a m�nh
-- Company: Ch? xem ???c UserJob cho c�ng vi?c c?a m�nh
-- Admin: Xem t?t c?
+- Student: Chỉ xem được UserJob của mình
+- Company: Chỉ xem được UserJob cho công việc của mình
+- Admin: Xem tất cả
 
 ---
 
 ### DELETE /api/UserJobs/{id}
 **Role:** Student (owner), Admin
 
-X�a m?m (soft delete) UserJob.
+Xóa mềm (soft delete) UserJob.
 
 **Request:**
 ```http
@@ -461,47 +461,47 @@ Authorization: Bearer {token}
 **Response:** `204 No Content`
 
 **Business Rules:**
-- Ch? Student t?o ??n ho?c Admin c� quy?n x�a
-- Company kh�ng th? x�a (ch? c� th? Withdrawn)
+- Chỉ Student tạo đơn hoặc Admin có quyền xóa
+- Company không thể xóa (chỉ có thể Withdrawn)
 
 ---
 
-## ??? Business Rules Summary
+## 🛡️ Business Rules Summary
 
 ### Rule 1: Final States Cannot Be Changed
 ```
-Accepted ? ? Kh�ng th? thay ??i
-Rejected ? ? Kh�ng th? thay ??i
-Withdrawn ? ? Kh�ng th? thay ??i
+Accepted → ❌ Không thể thay đổi
+Rejected → ❌ Không thể thay đổi
+Withdrawn → ❌ Không thể thay đổi
 ```
 
 ### Rule 2: Valid Status Transitions
 ```
-Applied ? Reviewing ?
-Applied ? Accepted ?
-Applied ? Rejected ?
-Applied ? Withdrawn ?
+Applied → Reviewing ✅
+Applied → Accepted ✅
+Applied → Rejected ✅
+Applied → Withdrawn ✅
 
-Reviewing ? Accepted ?
-Reviewing ? Rejected ?
-Reviewing ? Withdrawn ?
+Reviewing → Accepted ✅
+Reviewing → Rejected ✅
+Reviewing → Withdrawn ✅
 
-Other transitions ? ?
+Other transitions → ❌
 ```
 
 ### Rule 3: Withdrawn Only by Creator
-- **Student Apply:** Ch? Student c� quy?n Withdrawn
-- **Company Recruit:** Ch? Company c� quy?n Withdrawn
+- **Student Apply:** Chỉ Student có quyền Withdrawn
+- **Company Recruit:** Chỉ Company có quyền Withdrawn
 
 ### Rule 4: Accept/Reject by Opposite Party
-- **Student Apply:** Ch? Company c� quy?n Accept/Reject
-- **Company Recruit:** Ch? Student c� quy?n Accept/Reject
+- **Student Apply:** Chỉ Company có quyền Accept/Reject
+- **Company Recruit:** Chỉ Student có quyền Accept/Reject
 
 ---
 
-## ?? Ph�n bi?t Student Apply vs Company Recruit
+## 🎯 Phân biệt Student Apply vs Company Recruit
 
-S? d?ng logic:
+Sử dụng logic:
 
 ```javascript
 // Frontend logic
@@ -516,33 +516,33 @@ const isCompanyInitiated = (userJob) => {
 };
 ```
 
-**V� d?:**
+**Ví dụ:**
 ```json
 // Student Apply
 {
   "userId": "student-123",
-  "updatedBy": "student-123",  // ? Gi?ng nhau
+  "updatedBy": "student-123",  // ← Giống nhau
   "createdAt": "2025-01-15T10:00:00Z",
-  "updatedAt": "2025-01-15T10:00:00Z"  // ? B?ng nhau
+  "updatedAt": "2025-01-15T10:00:00Z"  // ← Bằng nhau
 }
 
 // Company Recruit
 {
   "userId": "student-123",
-  "updatedBy": "company-456",  // ? Kh�c nhau
+  "updatedBy": "company-456",  // ← Khác nhau
   "createdAt": "2025-01-15T10:00:00Z",
-  "updatedAt": "2025-01-15T10:00:00Z"  // ? B?ng nhau
+  "updatedAt": "2025-01-15T10:00:00Z"  // ← Bằng nhau
 }
 ```
 
 ---
 
-## ?? Error Responses
+## ⚠️ Error Responses
 
 ### 400 Bad Request
 ```json
 {
-  "message": "Kh�ng th? thay ??i tr?ng th�i 'Accepted'. ?�y l� tr?ng th�i k?t th�c."
+  "message": "Không thể thay đổi trạng thái 'Accepted'. Đây là trạng thái kết thúc."
 }
 ```
 
@@ -563,18 +563,18 @@ const isCompanyInitiated = (userJob) => {
 ### 404 Not Found
 ```json
 {
-  "message": "Kh�ng t�m th?y ??n ?ng tuy?n."
+  "message": "Không tìm thấy đơn ứng tuyển."
 }
 ```
 
 ---
 
-## ?? Frontend Implementation Guide
+## 📝 Frontend Implementation Guide
 
 ### React Example: Student Apply Flow
 
 ```typescript
-// 1. Student xem g?i � v� apply
+// 1. Student xem gợi ý và apply
 const applyForJob = async (jobId: number) => {
   const response = await fetch('/api/UserJobs', {
     method: 'POST',
@@ -594,7 +594,7 @@ const applyForJob = async (jobId: number) => {
   }
 };
 
-// 2. Student xem danh s�ch ??n ?� n?p
+// 2. Student xem danh sách đơn đã nộp
 const getMyApplications = async () => {
   const response = await fetch('/api/UserJobs/MyApplications', {
     headers: {
@@ -606,7 +606,7 @@ const getMyApplications = async () => {
   return applications;
 };
 
-// 3. Student r�t ??n
+// 3. Student rút đơn
 const withdrawApplication = async (id: number) => {
   const response = await fetch(`/api/UserJobs/${id}`, {
     method: 'PUT',
@@ -628,7 +628,7 @@ const withdrawApplication = async (id: number) => {
 ### React Example: Company Recruit Flow
 
 ```typescript
-// 1. Company xem g?i � ?ng vi�n
+// 1. Company xem gợi ý ứng viên
 const getCandidateSuggestions = async (jobId: number) => {
   const response = await fetch(`/api/Jobs/CandidateSuggestions/${jobId}?top=10`, {
     headers: {
@@ -640,7 +640,7 @@ const getCandidateSuggestions = async (jobId: number) => {
   return candidates;
 };
 
-// 2. Company m?i ?ng vi�n
+// 2. Company mời ứng viên
 const inviteCandidate = async (userId: string, jobId: number) => {
   const response = await fetch('/api/UserJobs/InviteCandidate', {
     method: 'POST',
@@ -660,7 +660,7 @@ const inviteCandidate = async (userId: string, jobId: number) => {
   }
 };
 
-// 3. Company xem danh s�ch ?ng vi�n cho job
+// 3. Company xem danh sách ứng viên cho job
 const getJobApplications = async (jobId: number) => {
   const response = await fetch(`/api/UserJobs/JobApplications/${jobId}`, {
     headers: {
@@ -672,7 +672,7 @@ const getJobApplications = async (jobId: number) => {
   return applications;
 };
 
-// 4. Company ch?p nh?n/t? ch?i ?ng vi�n
+// 4. Company chấp nhận/từ chối ứng viên
 const updateApplicationStatus = async (id: number, status: string) => {
   const response = await fetch(`/api/UserJobs/${id}`, {
     method: 'PUT',
@@ -693,59 +693,59 @@ const updateApplicationStatus = async (id: number, status: string) => {
 
 ---
 
-## ?? UI/UX Recommendations
+## 🎨 UI/UX Recommendations
 
 ### Status Display Colors:
-- **Applied:** ?? Blue (Ch? x? l�)
-- **Reviewing:** ?? Yellow (?ang xem x�t)
-- **Accepted:** ?? Green (Th�nh c�ng)
-- **Rejected:** ?? Red (Th?t b?i)
-- **Withdrawn:** ? Gray (?� h?y)
+- **Applied:** 🔵 Blue (Chờ xử lý)
+- **Reviewing:** 🟡 Yellow (Đang xem xét)
+- **Accepted:** 🟢 Green (Thành công)
+- **Rejected:** 🔴 Red (Thất bại)
+- **Withdrawn:** ⚫ Gray (Đã hủy)
 
 ### Action Buttons by Role:
 
 **Student viewing own application:**
-- Applied/Reviewing ? Button: "R�t ??n" (Withdrawn)
-- Accepted/Rejected/Withdrawn ? No action
+- Applied/Reviewing → Button: "Rút đơn" (Withdrawn)
+- Accepted/Rejected/Withdrawn → No action
 
 **Student viewing company invitation:**
-- Applied ? Buttons: "C�n nh?c" (Reviewing), "T? ch?i" (Rejected)
-- Reviewing ? Buttons: "Ch?p nh?n" (Accepted), "T? ch?i" (Rejected)
-- Accepted/Rejected/Withdrawn ? No action
+- Applied → Buttons: "Cân nhắc" (Reviewing), "Từ chối" (Rejected)
+- Reviewing → Buttons: "Chấp nhận" (Accepted), "Từ chối" (Rejected)
+- Accepted/Rejected/Withdrawn → No action
 
 **Company viewing student application:**
-- Applied ? Buttons: "Xem x�t" (Reviewing), "Ch?p nh?n" (Accepted), "T? ch?i" (Rejected)
-- Reviewing ? Buttons: "Ch?p nh?n" (Accepted), "T? ch?i" (Rejected)
-- Accepted/Rejected/Withdrawn ? No action
+- Applied → Buttons: "Xem xét" (Reviewing), "Chấp nhận" (Accepted), "Từ chối" (Rejected)
+- Reviewing → Buttons: "Chấp nhận" (Accepted), "Từ chối" (Rejected)
+- Accepted/Rejected/Withdrawn → No action
 
 **Company viewing own invitation:**
-- Applied/Reviewing ? Button: "R�t l?i m?i" (Withdrawn)
-- Accepted/Rejected/Withdrawn ? No action
+- Applied/Reviewing → Button: "Rút lời mời" (Withdrawn)
+- Accepted/Rejected/Withdrawn → No action
 
 ---
 
-## ?? Testing Scenarios
+## 📈 Testing Scenarios
 
 ### Test Case 1: Student Apply Success Flow
-1. Student POST `/api/UserJobs` v?i jobId ? Status = Applied ?
-2. Company PUT status ? Reviewing ?
-3. Company PUT status ? Accepted ?
-4. Student/Company PUT status ? Error (Final state) ?
+1. Student POST `/api/UserJobs` với jobId → Status = Applied ✅
+2. Company PUT status → Reviewing ✅
+3. Company PUT status → Accepted ✅
+4. Student/Company PUT status → Error (Final state) ✅
 
 ### Test Case 2: Company Recruit Success Flow
-1. Company POST `/api/UserJobs/InviteCandidate` ? Status = Applied ?
-2. Student PUT status ? Reviewing ?
-3. Student PUT status ? Accepted ?
+1. Company POST `/api/UserJobs/InviteCandidate` → Status = Applied ✅
+2. Student PUT status → Reviewing ✅
+3. Student PUT status → Accepted ✅
 
 ### Test Case 3: Student Withdraw
-1. Student POST apply ? Status = Applied ?
-2. Student PUT status ? Withdrawn ?
-3. Company PUT status ? Error (Final state) ?
+1. Student POST apply → Status = Applied ✅
+2. Student PUT status → Withdrawn ✅
+3. Company PUT status → Error (Final state) ✅
 
 ### Test Case 4: Invalid Transitions
-1. Student POST apply ? Applied ?
-2. Student PUT status ? Accepted ? (Error: Sinh vi�n kh�ng th? t? ch?p nh?n)
-3. Company PUT status ? Withdrawn ? (Error: Ch? ng??i t?o m?i r�t ???c)
+1. Student POST apply → Applied ✅
+2. Student PUT status → Accepted ❌ (Error: Sinh viên không thể tự chấp nhận)
+3. Company PUT status → Withdrawn ❌ (Error: Chỉ người tạo mới rút được)
 
 ---
 
