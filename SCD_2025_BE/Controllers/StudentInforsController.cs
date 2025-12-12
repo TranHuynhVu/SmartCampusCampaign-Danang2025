@@ -134,7 +134,7 @@ namespace SCD_2025_BE.Controllers
         [HttpPost]
         [Authorize(Roles = "Student")]
         [Consumes("multipart/form-data")]
-        public async Task<ActionResult<StudentInforResponseDto>> CreateStudentInfor([FromForm] StudentInforDto studentDto, IFormFile? resumeFile = null)
+        public async Task<ActionResult<StudentInforResponseDto>> CreateStudentInfor([FromForm] StudentInforDto studentDto, IFormFile? resumeFile = null, IFormFile? avatarFile = null)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
@@ -143,11 +143,12 @@ namespace SCD_2025_BE.Controllers
             // Nếu đã có hồ sơ, chuyển sang update
             if (existingStudent != null)
             {
-                return await UpdateExistingStudent(existingStudent, studentDto, resumeFile, userId);
+                return await UpdateExistingStudent(existingStudent, studentDto, resumeFile, avatarFile, userId);
             }
 
             // Xử lý file upload
             string? resumeUrl = null;
+            string? avatarUrl = null;
             byte[]? pdfBytes = null;
             
             if (resumeFile != null)
@@ -188,6 +189,42 @@ namespace SCD_2025_BE.Controllers
                 resumeUrl = $"/resumes/{fileName}";
             }
 
+            // Xử lý avatar upload
+            if (avatarFile != null)
+            {
+                // Kiểm tra file có phải là hình ảnh không
+                var allowedImageTypes = new[] { "image/jpeg", "image/jpg", "image/png", "image/gif" };
+                if (!allowedImageTypes.Contains(avatarFile.ContentType.ToLower()))
+                {
+                    return BadRequest(new { Message = "Chỉ chấp nhận file ảnh (JPEG, PNG, GIF) cho avatar." });
+                }
+
+                // Kiểm tra kích thước file (giới hạn 2MB)
+                if (avatarFile.Length > 2 * 1024 * 1024)
+                {
+                    return BadRequest(new { Message = "File avatar không được vượt quá 2MB." });
+                }
+
+                // Tạo thư mục lưu trữ nếu chưa tồn tại
+                var avatarFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "avatars");
+                if (!Directory.Exists(avatarFolder))
+                {
+                    Directory.CreateDirectory(avatarFolder);
+                }
+
+                // Tạo tên file duy nhất
+                var avatarFileName = $"{userId}_{Guid.NewGuid()}{Path.GetExtension(avatarFile.FileName)}";
+                var avatarFilePath = Path.Combine(avatarFolder, avatarFileName);
+
+                // Lưu file
+                using (var stream = new FileStream(avatarFilePath, FileMode.Create))
+                {
+                    await avatarFile.CopyToAsync(stream);
+                }
+
+                avatarUrl = $"/avatars/{avatarFileName}";
+            }
+
             StudentInfor student;
 
             // Nếu có file PDF, dùng AI phân tích CV
@@ -204,6 +241,8 @@ namespace SCD_2025_BE.Controllers
                 // Gán thông tin bổ sung
                 student.UserId = userId;
                 student.ResumeUrl = resumeUrl;
+                student.AvatarUrl = avatarUrl;
+                student.OpenToWork = studentDto.OpenToWork ?? true;
                 student.CreatedAt = DateTime.UtcNow;
                 student.UpdatedBy = userId;
                 
@@ -217,6 +256,7 @@ namespace SCD_2025_BE.Controllers
                     UserId = userId,
                     Name = studentDto.Name,
                     ResumeUrl = resumeUrl,
+                    AvatarUrl = avatarUrl,
                     GPA = studentDto.GPA,
                     Skills = studentDto.Skills,
                     Archievements = studentDto.Archievements,
@@ -265,9 +305,55 @@ namespace SCD_2025_BE.Controllers
             return CreatedAtAction(nameof(GetStudentInfor), new { id = student.Id }, response);
         }
 
-        private async Task<ActionResult<StudentInforResponseDto>> UpdateExistingStudent(StudentInfor student, StudentInforDto studentDto, IFormFile? resumeFile, string userId)
+        private async Task<ActionResult<StudentInforResponseDto>> UpdateExistingStudent(StudentInfor student, StudentInforDto studentDto, IFormFile? resumeFile, IFormFile? avatarFile, string userId)
         {
             byte[]? pdfBytes = null;
+
+            // Xử lý avatar upload nếu có
+            if (avatarFile != null)
+            {
+                // Kiểm tra file có phải là hình ảnh không
+                var allowedImageTypes = new[] { "image/jpeg", "image/jpg", "image/png", "image/gif" };
+                if (!allowedImageTypes.Contains(avatarFile.ContentType.ToLower()))
+                {
+                    return BadRequest(new { Message = "Chỉ chấp nhận file ảnh (JPEG, PNG, GIF) cho avatar." });
+                }
+
+                // Kiểm tra kích thước file (giới hạn 4MB)
+                if (avatarFile.Length > 2 * 2024 * 2024)
+                {
+                    return BadRequest(new { Message = "File avatar không được vượt quá 2MB." });
+                }
+
+                // Xóa file cũ nếu tồn tại
+                if (!string.IsNullOrEmpty(student.AvatarUrl))
+                {
+                    var oldAvatarPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", student.AvatarUrl.TrimStart('/'));
+                    if (System.IO.File.Exists(oldAvatarPath))
+                    {
+                        System.IO.File.Delete(oldAvatarPath);
+                    }
+                }
+
+                // Tạo thư mục lưu trữ nếu chưa tồn tại
+                var avatarFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "avatars");
+                if (!Directory.Exists(avatarFolder))
+                {
+                    Directory.CreateDirectory(avatarFolder);
+                }
+
+                // Tạo tên file duy nhất
+                var avatarFileName = $"{userId}_{Guid.NewGuid()}{Path.GetExtension(avatarFile.FileName)}";
+                var avatarFilePath = Path.Combine(avatarFolder, avatarFileName);
+
+                // Lưu file
+                using (var stream = new FileStream(avatarFilePath, FileMode.Create))
+                {
+                    await avatarFile.CopyToAsync(stream);
+                }
+
+                student.AvatarUrl = $"/avatars/{avatarFileName}";
+            }
 
             // Xử lý file upload nếu có
             if (resumeFile != null)
@@ -335,7 +421,14 @@ namespace SCD_2025_BE.Controllers
                     student.Educations = aiStudent.Educations;
                 }
             }
-            else
+
+            // Cập nhật OpenToWork nếu có trong DTO
+            if (studentDto.OpenToWork.HasValue)
+            {
+                student.OpenToWork = studentDto.OpenToWork.Value;
+            }
+
+            if (resumeFile == null)
             {
                 // Không có PDF, chỉ update các field có giá trị từ DTO
                 if (!string.IsNullOrEmpty(studentDto.Name)) student.Name = studentDto.Name;
@@ -381,6 +474,8 @@ namespace SCD_2025_BE.Controllers
                 Experiences = student.Experiences,
                 Projects = student.Projects,
                 Educations = student.Educations,
+                AvatarUrl = student.AvatarUrl,
+                OpenToWork = student.OpenToWork,
                 UpdatedBy = student.UpdatedBy,
                 CreatedAt = student.CreatedAt,
                 UpdatedAt = student.UpdatedAt

@@ -29,6 +29,48 @@ namespace SCD_2025_BE.Repositories
                 new Claim(ClaimTypes.Role, role)
             };
 
+            if(role == "Company")
+            {
+                //lấy thông tin CompanyInfor để add claim
+                var companyInfor = await _context.CompanyInfors
+                    .FirstOrDefaultAsync(c => c.UserId == user.Id);
+                
+                if(companyInfor != null)
+                {
+                    claims.Add(new Claim("CompanyId", companyInfor.Id.ToString()));
+                    claims.Add(new Claim("CompanyName", companyInfor.CompanyName ?? ""));
+                    claims.Add(new Claim("Descriptions", companyInfor.Descriptions ?? ""));
+                    claims.Add(new Claim("CompanyWebsite", companyInfor.CompanyWebsite ?? ""));
+                    claims.Add(new Claim("LogoUrl", companyInfor.LogoUrl ?? ""));
+                    claims.Add(new Claim("Location", companyInfor.Location ?? ""));
+                }
+            }
+            else if(role == "Student")
+            {
+                //lấy thông tin StudentInfor để add claim
+                var studentInfor = await _context.StudentInfors
+                    .FirstOrDefaultAsync(s => s.UserId == user.Id);
+                
+                if(studentInfor != null)
+                {
+                    claims.Add(new Claim("StudentId", studentInfor.Id.ToString()));
+                    claims.Add(new Claim("StudentName", studentInfor.Name ?? ""));
+                    claims.Add(new Claim("ResumeUrl", studentInfor.ResumeUrl ?? ""));
+                    claims.Add(new Claim("GPA", studentInfor.GPA ?? ""));
+                    claims.Add(new Claim("Skills", studentInfor.Skills ?? ""));
+                    claims.Add(new Claim("Archievements", studentInfor.Archievements ?? ""));
+                    claims.Add(new Claim("YearOfStudy", studentInfor.YearOfStudy ?? ""));
+                    claims.Add(new Claim("Major", studentInfor.Major ?? ""));
+                    claims.Add(new Claim("Languages", studentInfor.Languages ?? ""));
+                    claims.Add(new Claim("Certifications", studentInfor.Certifications ?? ""));
+                    claims.Add(new Claim("Experiences", studentInfor.Experiences ?? ""));
+                    claims.Add(new Claim("Projects", studentInfor.Projects ?? ""));
+                    claims.Add(new Claim("Educations", studentInfor.Educations ?? ""));
+                    claims.Add(new Claim("AvatarUrl", studentInfor.AvatarUrl ?? ""));
+                    claims.Add(new Claim("OpenToWork", studentInfor.OpenToWork?.ToString() ?? "false"));
+                }
+            }
+
             var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 

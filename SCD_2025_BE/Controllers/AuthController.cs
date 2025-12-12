@@ -226,6 +226,8 @@ namespace SCD_2025_BE.Controllers
                             studentInfor.Projects = requestDto.Projects;
                         if (!string.IsNullOrEmpty(requestDto.Educations))
                             studentInfor.Educations = requestDto.Educations;
+
+                        studentInfor.OpenToWork = true; // Mặc định OpenToWork = true
                     }
                     else
                     {
