@@ -210,6 +210,43 @@ namespace SCD_2025_BE.Controllers
             return Ok(new { Message = "Lời mời đã được từ chối." });
         }
 
+        // DELETE: api/UserJobs/WithdrawApplication/{id} - Sinh viên rút đơn ứng tuyển
+        [HttpDelete("WithdrawApplication/{id}")]
+        [Authorize(Roles = "Student")]
+        public async Task<ActionResult> WithdrawApplication(int id)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            var userJob = await _unitOfWork.UserJobs.GetApplicationWithDetailsAsync(id);
+            if (userJob == null || userJob.DeletedAt != null)
+            {
+                return NotFound(new { Message = "Không tìm thấy đơn ứng tuyển." });
+            }
+
+            if (userJob.UserId != userId)
+            {
+                return Forbid();
+            }
+
+            if (userJob.Type != "Application")
+            {
+                return BadRequest(new { Message = "Đây không phải là đơn ứng tuyển." });
+            }
+
+            if (userJob.Status != "Pending")
+            {
+                return BadRequest(new { Message = "Không thể rút đơn ứng tuyển đã được phản hồi." });
+            }
+
+            userJob.DeletedAt = DateTime.Now;
+            userJob.UpdatedBy = userId;
+
+            _unitOfWork.UserJobs.Update(userJob);
+            await _unitOfWork.SaveChangesAsync();
+
+            return Ok(new { Message = "Đơn ứng tuyển đã được rút thành công." });
+        }
+
         #endregion
 
         #region Company APIs
@@ -465,6 +502,43 @@ namespace SCD_2025_BE.Controllers
             await _unitOfWork.SaveChangesAsync();
 
             return Ok(new { Message = "Đơn ứng tuyển đã được từ chối." });
+        }
+
+        // DELETE: api/UserJobs/WithdrawInvitation/{id} - Doanh nghiệp rút lời mời
+        [HttpDelete("WithdrawInvitation/{id}")]
+        [Authorize(Roles = "Company")]
+        public async Task<ActionResult> WithdrawInvitation(int id)
+        {
+            var companyUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            var userJob = await _unitOfWork.UserJobs.GetApplicationWithDetailsAsync(id);
+            if (userJob == null || userJob.DeletedAt != null)
+            {
+                return NotFound(new { Message = "Không tìm thấy lời mời." });
+            }
+
+            if (userJob.Job.CompanyInfor.UserId != companyUserId)
+            {
+                return Forbid();
+            }
+
+            if (userJob.Type != "Invitation")
+            {
+                return BadRequest(new { Message = "Đây không phải là lời mời." });
+            }
+
+            if (userJob.Status != "Pending")
+            {
+                return BadRequest(new { Message = "Không thể rút lời mời đã được phản hồi." });
+            }
+
+            userJob.DeletedAt = DateTime.Now;
+            userJob.UpdatedBy = companyUserId;
+
+            _unitOfWork.UserJobs.Update(userJob);
+            await _unitOfWork.SaveChangesAsync();
+
+            return Ok(new { Message = "Lời mời đã được rút thành công." });
         }
 
         #endregion
