@@ -96,8 +96,8 @@ namespace SCD_2025_BE.Controllers
             return Ok(response);
         }
 
-        // PUT: api/UserJobs/RespondInvitation/{id} - Sinh viên chấp nhận/từ chối lời mời
-        [HttpPut("RespondInvitation/{id}")]
+        // POST: api/UserJobs/RespondInvitation/update/{id} - Sinh viên chấp nhận/từ chối lời mời
+        [HttpPost("RespondInvitation/update/{id}")]
         [Authorize(Roles = "Student")]
         public async Task<ActionResult> RespondToInvitation(int id, [FromBody] UserJobResponseStatusDto dto)
         {
@@ -134,8 +134,8 @@ namespace SCD_2025_BE.Controllers
             return Ok(new { Message = $"Lời mời đã được {(dto.Status == "Accepted" ? "chấp nhận" : "từ chối")}." });
         }
 
-        // PUT: api/UserJobs/AcceptInvitation/{id} - Sinh viên chấp nhận lời mời
-        [HttpPut("AcceptInvitation/{id}")]
+        // POST: api/UserJobs/AcceptInvitation/update/{id} - Sinh viên chấp nhận lời mời
+        [HttpPost("AcceptInvitation/update/{id}")]
         [Authorize(Roles = "Student")]
         public async Task<ActionResult> AcceptInvitation(int id)
         {
@@ -172,8 +172,8 @@ namespace SCD_2025_BE.Controllers
             return Ok(new { Message = "Lời mời đã được chấp nhận." });
         }
 
-        // PUT: api/UserJobs/RejectInvitation/{id} - Sinh viên từ chối lời mời
-        [HttpPut("RejectInvitation/{id}")]
+        // POST: api/UserJobs/RejectInvitation/update/{id} - Sinh viên từ chối lời mời
+        [HttpPost("RejectInvitation/update/{id}")]
         [Authorize(Roles = "Student")]
         public async Task<ActionResult> RejectInvitation(int id)
         {
@@ -210,8 +210,8 @@ namespace SCD_2025_BE.Controllers
             return Ok(new { Message = "Lời mời đã được từ chối." });
         }
 
-        // DELETE: api/UserJobs/WithdrawApplication/{id} - Sinh viên rút đơn ứng tuyển
-        [HttpDelete("WithdrawApplication/{id}")]
+        // POST: api/UserJobs/WithdrawApplication/delete/{id} - Sinh viên rút đơn ứng tuyển
+        [HttpPost("WithdrawApplication/delete/{id}")]
         [Authorize(Roles = "Student")]
         public async Task<ActionResult> WithdrawApplication(int id)
         {
@@ -390,8 +390,8 @@ namespace SCD_2025_BE.Controllers
             return Ok(response);
         }
 
-        // PUT: api/UserJobs/RespondApplication/{id} - Doanh nghiệp chấp nhận/từ chối đơn ứng tuyển
-        [HttpPut("RespondApplication/{id}")]
+        // POST: api/UserJobs/RespondApplication/update/{id} - Doanh nghiệp chấp nhận/từ chối đơn ứng tuyển
+        [HttpPost("RespondApplication/update/{id}")]
         [Authorize(Roles = "Company")]
         public async Task<ActionResult> RespondToApplication(int id, [FromBody] UserJobResponseStatusDto dto)
         {
@@ -428,8 +428,8 @@ namespace SCD_2025_BE.Controllers
             return Ok(new { Message = $"Đơn ứng tuyển đã được {(dto.Status == "Accepted" ? "chấp nhận" : "từ chối")}." });
         }
 
-        // PUT: api/UserJobs/AcceptApplication/{id} - Doanh nghiệp chấp nhận đơn ứng tuyển
-        [HttpPut("AcceptApplication/{id}")]
+        // POST: api/UserJobs/AcceptApplication/update/{id} - Doanh nghiệp chấp nhận đơn ứng tuyển
+        [HttpPost("AcceptApplication/update/{id}")]
         [Authorize(Roles = "Company")]
         public async Task<ActionResult> AcceptApplication(int id)
         {
@@ -466,8 +466,8 @@ namespace SCD_2025_BE.Controllers
             return Ok(new { Message = "Đơn ứng tuyển đã được chấp nhận." });
         }
 
-        // PUT: api/UserJobs/RejectApplication/{id} - Doanh nghiệp từ chối đơn ứng tuyển
-        [HttpPut("RejectApplication/{id}")]
+        // POST: api/UserJobs/RejectApplication/update/{id} - Doanh nghiệp từ chối đơn ứng tuyển
+        [HttpPost("RejectApplication/update/{id}")]
         [Authorize(Roles = "Company")]
         public async Task<ActionResult> RejectApplication(int id)
         {
@@ -504,8 +504,8 @@ namespace SCD_2025_BE.Controllers
             return Ok(new { Message = "Đơn ứng tuyển đã được từ chối." });
         }
 
-        // DELETE: api/UserJobs/WithdrawInvitation/{id} - Doanh nghiệp rút lời mời
-        [HttpDelete("WithdrawInvitation/{id}")]
+        // POST: api/UserJobs/WithdrawInvitation/delete/{id} - Doanh nghiệp rút lời mời
+        [HttpPost("WithdrawInvitation/delete/{id}")]
         [Authorize(Roles = "Company")]
         public async Task<ActionResult> WithdrawInvitation(int id)
         {
@@ -572,8 +572,8 @@ namespace SCD_2025_BE.Controllers
             return Ok(response);
         }
 
-        // DELETE: api/UserJobs/{id}
-        [HttpDelete("{id}")]
+        // POST: api/UserJobs/delete/{id}
+        [HttpPost("delete/{id}")]
         public async Task<IActionResult> DeleteUserJob(int id)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

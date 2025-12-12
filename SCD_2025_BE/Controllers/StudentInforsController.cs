@@ -484,7 +484,7 @@ namespace SCD_2025_BE.Controllers
             return Ok(response);
         }
 
-        [HttpDelete("{id}")]
+        [HttpPost("delete/{id}")]
         [Authorize(Roles = "Student,Admin")]
         public async Task<IActionResult> DeleteStudentInfor(int id)
         {

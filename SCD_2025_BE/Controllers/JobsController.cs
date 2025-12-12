@@ -201,8 +201,8 @@ namespace SCD_2025_BE.Controllers
             return CreatedAtAction(nameof(GetJob), new { id = job.Id }, response);
         }
 
-        // PUT: api/Jobs/5
-        [HttpPut("{id}")]
+        // POST: api/Jobs/update/5
+        [HttpPost("update/{id}")]
         [Authorize(Roles = "Company")]
         public async Task<IActionResult> UpdateJob(int id, JobDto jobDto)
         {
@@ -250,8 +250,8 @@ namespace SCD_2025_BE.Controllers
             return NoContent();
         }
 
-        // DELETE: api/Jobs/5
-        [HttpDelete("{id}")]
+        // POST: api/Jobs/delete/5
+        [HttpPost("delete/{id}")]
         [Authorize(Roles = "Company,Admin")]
         public async Task<IActionResult> DeleteJob(int id)
         {

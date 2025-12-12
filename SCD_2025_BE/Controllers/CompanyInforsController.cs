@@ -190,7 +190,7 @@ namespace SCD_2025_BE.Controllers
             return CreatedAtAction(nameof(GetCompanyInfor), new { id = company.Id }, response);
         }
 
-        [HttpDelete("{id}")]
+        [HttpPost("delete/{id}")]
         [Authorize(Roles = "Company,Admin")]
         public async Task<IActionResult> DeleteCompanyInfor(int id)
         {

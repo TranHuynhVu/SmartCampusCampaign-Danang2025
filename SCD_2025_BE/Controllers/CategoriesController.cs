@@ -95,8 +95,8 @@ namespace SCD_2025_BE.Controllers
             return CreatedAtAction(nameof(GetCategory), new { id = category.Id }, response);
         }
 
-        // PUT: api/Categories/5
-        [HttpPut("{id}")]
+        // POST: api/Categories/update/5
+        [HttpPost("update/{id}")]
         [Authorize(Roles = "Admin,Company")]
         public async Task<IActionResult> UpdateCategory(int id, CategoryDto categoryDto)
         {
@@ -120,8 +120,8 @@ namespace SCD_2025_BE.Controllers
             return NoContent();
         }
 
-        // DELETE: api/Categories/5
-        [HttpDelete("{id}")]
+        // POST: api/Categories/delete/5
+        [HttpPost("delete/{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteCategory(int id)
         {
