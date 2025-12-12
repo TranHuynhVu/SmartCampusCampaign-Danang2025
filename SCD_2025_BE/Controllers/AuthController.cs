@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using SCD_2025_BE.Entities.Domains;
 using SCD_2025_BE.Entities.DTO;
 using SCD_2025_BE.Repositories;
+using SCD_2025_BE.Service;
 
 namespace SCD_2025_BE.Controllers
 {
@@ -18,13 +19,23 @@ namespace SCD_2025_BE.Controllers
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly ITokenReposity _tokenRepository;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IGemini _geminiService;
+        private readonly IWebHostEnvironment _environment;
 
-        public AuthController(UserManager<AppUser> userManager, RoleManager<IdentityRole> roleManager, ITokenReposity token, IUnitOfWork unitOfWork)
+        public AuthController(
+            UserManager<AppUser> userManager, 
+            RoleManager<IdentityRole> roleManager, 
+            ITokenReposity token, 
+            IUnitOfWork unitOfWork,
+            IGemini geminiService,
+            IWebHostEnvironment environment)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _tokenRepository = token;
             _unitOfWork = unitOfWork;
+            _geminiService = geminiService;
+            _environment = environment;
         }
 
         [HttpPost]
@@ -155,8 +166,116 @@ namespace SCD_2025_BE.Controllers
 
         [HttpPost]
         [Route("RegisterStudent")]
-        public async Task<IActionResult> RegisterStudent([FromBody] RegisterStudentDto requestDto)
+        public async Task<IActionResult> RegisterStudent([FromForm] RegisterStudentDto requestDto)
         {
+            StudentInfor studentInfor = null;
+            string resumeFileName = null;
+
+            // Nếu có resume PDF, đọc và trích xuất dữ liệu
+            if (requestDto.Resume != null && requestDto.Resume.Length > 0)
+            {
+                // Validate file type
+                if (requestDto.Resume.ContentType != "application/pdf")
+                {
+                    return BadRequest(new { Message = "Chỉ chấp nhận file PDF." });
+                }
+
+                // Validate file size (max 10MB)
+                if (requestDto.Resume.Length > 10 * 1024 * 1024)
+                {
+                    return BadRequest(new { Message = "Kích thước file không được vượt quá 10MB." });
+                }
+
+                try
+                {
+                    // Đọc file PDF
+                    byte[] pdfBytes;
+                    using (var memoryStream = new MemoryStream())
+                    {
+                        await requestDto.Resume.CopyToAsync(memoryStream);
+                        pdfBytes = memoryStream.ToArray();
+                    }
+
+                    // Trích xuất thông tin từ PDF bằng Gemini
+                    var extractedInfo = await _geminiService.ClassifyStudentCV(pdfBytes);
+                    
+                    if (extractedInfo != null)
+                    {
+                        studentInfor = extractedInfo;
+                        
+                        // Nếu có dữ liệu nhập tay, ưu tiên dữ liệu nhập tay cho các trường không null
+                        if (!string.IsNullOrEmpty(requestDto.Name))
+                            studentInfor.Name = requestDto.Name;
+                        if (!string.IsNullOrEmpty(requestDto.GPA))
+                            studentInfor.GPA = requestDto.GPA;
+                        if (!string.IsNullOrEmpty(requestDto.Skills))
+                            studentInfor.Skills = requestDto.Skills;
+                        if (!string.IsNullOrEmpty(requestDto.Archievements))
+                            studentInfor.Archievements = requestDto.Archievements;
+                        if (!string.IsNullOrEmpty(requestDto.YearOfStudy))
+                            studentInfor.YearOfStudy = requestDto.YearOfStudy;
+                        if (!string.IsNullOrEmpty(requestDto.Major))
+                            studentInfor.Major = requestDto.Major;
+                        if (!string.IsNullOrEmpty(requestDto.Languages))
+                            studentInfor.Languages = requestDto.Languages;
+                        if (!string.IsNullOrEmpty(requestDto.Certifications))
+                            studentInfor.Certifications = requestDto.Certifications;
+                        if (!string.IsNullOrEmpty(requestDto.Experiences))
+                            studentInfor.Experiences = requestDto.Experiences;
+                        if (!string.IsNullOrEmpty(requestDto.Projects))
+                            studentInfor.Projects = requestDto.Projects;
+                        if (!string.IsNullOrEmpty(requestDto.Educations))
+                            studentInfor.Educations = requestDto.Educations;
+                    }
+                    else
+                    {
+                        return BadRequest(new { Message = "Không thể trích xuất thông tin từ CV. Vui lòng nhập thông tin thủ công." });
+                    }
+
+                    // Lưu file PDF
+                    var resumesFolder = Path.Combine(_environment.WebRootPath, "resumes");
+                    if (!Directory.Exists(resumesFolder))
+                    {
+                        Directory.CreateDirectory(resumesFolder);
+                    }
+
+                    resumeFileName = $"{Guid.NewGuid()}_{requestDto.Resume.FileName}";
+                    var filePath = Path.Combine(resumesFolder, resumeFileName);
+                    
+                    using (var fileStream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await requestDto.Resume.CopyToAsync(fileStream);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return BadRequest(new { Message = $"Lỗi khi xử lý CV: {ex.Message}" });
+                }
+            }
+            else
+            {
+                // Không có resume, sử dụng dữ liệu nhập tay
+                if (string.IsNullOrEmpty(requestDto.Name))
+                {
+                    return BadRequest(new { Message = "Tên sinh viên là bắt buộc khi không có CV." });
+                }
+
+                studentInfor = new StudentInfor
+                {
+                    Name = requestDto.Name,
+                    GPA = requestDto.GPA,
+                    Skills = requestDto.Skills,
+                    Archievements = requestDto.Archievements,
+                    YearOfStudy = requestDto.YearOfStudy,
+                    Major = requestDto.Major,
+                    Languages = requestDto.Languages,
+                    Certifications = requestDto.Certifications,
+                    Experiences = requestDto.Experiences,
+                    Projects = requestDto.Projects,
+                    Educations = requestDto.Educations
+                };
+            }
+
             // Tạo user
             var user = new AppUser
             {
@@ -169,6 +288,15 @@ namespace SCD_2025_BE.Controllers
 
             if (!result.Succeeded)
             {
+                // Nếu tạo user thất bại, xóa file resume đã upload
+                if (!string.IsNullOrEmpty(resumeFileName))
+                {
+                    var filePath = Path.Combine(_environment.WebRootPath, "resumes", resumeFileName);
+                    if (System.IO.File.Exists(filePath))
+                    {
+                        System.IO.File.Delete(filePath);
+                    }
+                }
                 return BadRequest(new { Message = "Không thể tạo tài khoản.", Errors = result.Errors });
             }
 
@@ -179,28 +307,36 @@ namespace SCD_2025_BE.Controllers
             }
             await _userManager.AddToRoleAsync(user, "Student");
 
-            // Tạo StudentInfor
-            var studentInfor = new StudentInfor
+            // Gán UserId và các thông tin khác
+            studentInfor.UserId = user.Id;
+            studentInfor.CreatedAt = DateTime.UtcNow;
+            
+            // Lưu đường dẫn resume nếu có
+            if (!string.IsNullOrEmpty(resumeFileName))
             {
-                UserId = user.Id,
-                Name = requestDto.Name,
-                GPA = requestDto.GPA,
-                Skills = requestDto.Skills,
-                Archievements = requestDto.Archievements,
-                YearOfStudy = requestDto.YearOfStudy,
-                Major = requestDto.Major,
-                Languages = requestDto.Languages,
-                Certifications = requestDto.Certifications,
-                Experiences = requestDto.Experiences,
-                Projects = requestDto.Projects,
-                Educations = requestDto.Educations,
-                CreatedAt = DateTime.UtcNow
-            };
+                studentInfor.ResumeUrl = $"/resumes/{resumeFileName}";
+            }
+
+            // Tạo embedding cho hồ sơ sinh viên
+            try
+            {
+                var embeddingString = await _geminiService.GetStudentEmbedding(studentInfor);
+                studentInfor.EmBeddings = embeddingString;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Warning: Could not generate embedding: {ex.Message}");
+                // Không fail toàn bộ quá trình nếu embedding thất bại
+            }
 
             await _unitOfWork.StudentInfors.AddAsync(studentInfor);
             await _unitOfWork.SaveChangesAsync();
 
-            return Ok(new { Message = "Đăng ký sinh viên thành công.", UserId = user.Id });
+            return Ok(new { 
+                Message = "Đăng ký sinh viên thành công.", 
+                UserId = user.Id,
+                ResumeProcessed = requestDto.Resume != null
+            });
         }
 
         [HttpPost]
