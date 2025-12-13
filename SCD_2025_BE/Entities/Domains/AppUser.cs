@@ -10,5 +10,9 @@ namespace SCD_2025_BE.Entities.Domains
         public string? CreatedBy { get; set; }
         public string? UpdatedBy { get; set; }
         public string? DeletedBy { get; set; }
+        
+        // Navigation properties
+        public StudentInfor? StudentInfor { get; set; }
+        public CompanyInfor? CompanyInfor { get; set; }
     }
 }

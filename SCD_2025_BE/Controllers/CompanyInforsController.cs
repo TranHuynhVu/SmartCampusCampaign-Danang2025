@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using SCD_2025_BE.Entities.Domains;
 using SCD_2025_BE.Entities.DTO;
@@ -13,10 +14,12 @@ namespace SCD_2025_BE.Controllers
     public class CompanyInforsController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly UserManager<AppUser> _userManager;
 
-        public CompanyInforsController(IUnitOfWork unitOfWork)
+        public CompanyInforsController(IUnitOfWork unitOfWork, UserManager<AppUser> userManager)
         {
             _unitOfWork = unitOfWork;
+            _userManager = userManager;
         }
 
         [HttpGet]
@@ -25,19 +28,26 @@ namespace SCD_2025_BE.Controllers
         {
             var companies = await _unitOfWork.CompanyInfors.GetActiveCompaniesAsync();
 
-            var response = companies.Select(c => new CompanyInforResponseDto
+            var response = new List<CompanyInforResponseDto>();
+            foreach (var c in companies)
             {
-                Id = c.Id,
-                UserId = c.UserId,
-                CompanyName = c.CompanyName,
-                Descriptions = c.Descriptions,
-                CompanyWebsite = c.CompanyWebsite,
-                LogoUrl = c.LogoUrl,
-                Location = c.Location,
-                UpdatedBy = c.UpdatedBy,
-                CreatedAt = c.CreatedAt,
-                UpdatedAt = c.UpdatedAt
-            });
+                var user = await _userManager.FindByIdAsync(c.UserId);
+                response.Add(new CompanyInforResponseDto
+                {
+                    Id = c.Id,
+                    UserId = c.UserId,
+                    Email = user?.Email,
+                    PhoneNumber = user?.PhoneNumber,
+                    CompanyName = c.CompanyName,
+                    Descriptions = c.Descriptions,
+                    CompanyWebsite = c.CompanyWebsite,
+                    LogoUrl = c.LogoUrl,
+                    Location = c.Location,
+                    UpdatedBy = c.UpdatedBy,
+                    CreatedAt = c.CreatedAt,
+                    UpdatedAt = c.UpdatedAt
+                });
+            }
 
             return Ok(response);
         }
@@ -53,10 +63,14 @@ namespace SCD_2025_BE.Controllers
                 return NotFound(new { Message = "Không tìm thấy thông tin công ty." });
             }
 
+            var user = await _userManager.FindByIdAsync(company.UserId);
+
             var response = new CompanyInforResponseDto
             {
                 Id = company.Id,
                 UserId = company.UserId,
+                Email = user?.Email,
+                PhoneNumber = user?.PhoneNumber,
                 CompanyName = company.CompanyName,
                 Descriptions = company.Descriptions,
                 CompanyWebsite = company.CompanyWebsite,
@@ -83,10 +97,14 @@ namespace SCD_2025_BE.Controllers
                 return NotFound(new { Message = "Bạn chưa tạo thông tin công ty." });
             }
 
+            var user = await _userManager.FindByIdAsync(company.UserId);
+
             var response = new CompanyInforResponseDto
             {
                 Id = company.Id,
                 UserId = company.UserId,
+                Email = user?.Email,
+                PhoneNumber = user?.PhoneNumber,
                 CompanyName = company.CompanyName,
                 Descriptions = company.Descriptions,
                 CompanyWebsite = company.CompanyWebsite,
@@ -173,10 +191,14 @@ namespace SCD_2025_BE.Controllers
             await _unitOfWork.CompanyInfors.AddAsync(company);
             await _unitOfWork.SaveChangesAsync();
 
+            var user = await _userManager.FindByIdAsync(company.UserId);
+
             var response = new CompanyInforResponseDto
             {
                 Id = company.Id,
                 UserId = company.UserId,
+                Email = user?.Email,
+                PhoneNumber = user?.PhoneNumber,
                 CompanyName = company.CompanyName,
                 Descriptions = company.Descriptions,
                 CompanyWebsite = company.CompanyWebsite,
@@ -286,10 +308,14 @@ namespace SCD_2025_BE.Controllers
             _unitOfWork.CompanyInfors.Update(company);
             await _unitOfWork.SaveChangesAsync();
 
+            var user = await _userManager.FindByIdAsync(company.UserId);
+
             var response = new CompanyInforResponseDto
             {
                 Id = company.Id,
                 UserId = company.UserId,
+                Email = user?.Email,
+                PhoneNumber = user?.PhoneNumber,
                 CompanyName = company.CompanyName,
                 Descriptions = company.Descriptions,
                 CompanyWebsite = company.CompanyWebsite,

@@ -41,6 +41,7 @@ namespace SCD_2025_BE.Entities.DTO
         public string? Requirements { get; set; }
         public string? NiceToHave { get; set; }
         public int CompanyInforId { get; set; }
+        public string ? CompanyLogo { get; set; }
         public string? CompanyName { get; set; }
         public string? Location { get; set; }
         public string Status { get; set; }

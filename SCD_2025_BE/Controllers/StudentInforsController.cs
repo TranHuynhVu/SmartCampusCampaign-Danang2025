@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using SCD_2025_BE.Entities.Domains;
 using SCD_2025_BE.Entities.DTO;
@@ -16,11 +17,13 @@ namespace SCD_2025_BE.Controllers
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IGemini _geminiService;
+        private readonly UserManager<AppUser> _userManager;
 
-        public StudentInforsController(IUnitOfWork unitOfWork, IGemini geminiService)
+        public StudentInforsController(IUnitOfWork unitOfWork, IGemini geminiService, UserManager<AppUser> userManager)
         {
             _unitOfWork = unitOfWork;
             _geminiService = geminiService;
+            _userManager = userManager;
         }
 
         [HttpGet]
@@ -29,28 +32,35 @@ namespace SCD_2025_BE.Controllers
         {
             var students = await _unitOfWork.StudentInfors.GetActiveStudentsAsync();
 
-            var response = students.Select(s => new StudentInforResponseDto
+            var response = new List<StudentInforResponseDto>();
+            foreach (var s in students)
             {
-                Id = s.Id,
-                UserId = s.UserId,
-                Name = s.Name,
-                ResumeUrl = s.ResumeUrl,
-                GPA = s.GPA,
-                Skills = s.Skills,
-                Archievements = s.Archievements,
-                YearOfStudy = s.YearOfStudy,
-                Major = s.Major,
-                Languages = s.Languages,
-                Certifications = s.Certifications,
-                Experiences = s.Experiences,
-                Projects = s.Projects,
-                Educations = s.Educations,
-                AvatarUrl = s.AvatarUrl,
-                OpenToWork = s.OpenToWork,
-                UpdatedBy = s.UpdatedBy,
-                CreatedAt = s.CreatedAt,
-                UpdatedAt = s.UpdatedAt
-            });
+                var user = await _userManager.FindByIdAsync(s.UserId);
+                response.Add(new StudentInforResponseDto
+                {
+                    Id = s.Id,
+                    UserId = s.UserId,
+                    Email = user?.Email,
+                    PhoneNumber = user?.PhoneNumber,
+                    Name = s.Name,
+                    ResumeUrl = s.ResumeUrl,
+                    GPA = s.GPA,
+                    Skills = s.Skills,
+                    Archievements = s.Archievements,
+                    YearOfStudy = s.YearOfStudy,
+                    Major = s.Major,
+                    Languages = s.Languages,
+                    Certifications = s.Certifications,
+                    Experiences = s.Experiences,
+                    Projects = s.Projects,
+                    Educations = s.Educations,
+                    AvatarUrl = s.AvatarUrl,
+                    OpenToWork = s.OpenToWork,
+                    UpdatedBy = s.UpdatedBy,
+                    CreatedAt = s.CreatedAt,
+                    UpdatedAt = s.UpdatedAt
+                });
+            }
 
             return Ok(response);
         }
@@ -66,10 +76,14 @@ namespace SCD_2025_BE.Controllers
                 return NotFound(new { Message = "Không tìm thấy thông tin sinh viên." });
             }
 
+            var user = await _userManager.FindByIdAsync(student.UserId);
+
             var response = new StudentInforResponseDto
             {
                 Id = student.Id,
                 UserId = student.UserId,
+                Email = user?.Email,
+                PhoneNumber = user?.PhoneNumber,
                 Name = student.Name,
                 ResumeUrl = student.ResumeUrl,
                 GPA = student.GPA,
@@ -105,10 +119,14 @@ namespace SCD_2025_BE.Controllers
                 return NotFound(new { Message = "Bạn chưa tạo hồ sơ sinh viên." });
             }
 
+            var user = await _userManager.FindByIdAsync(student.UserId);
+
             var response = new StudentInforResponseDto
             {
                 Id = student.Id,
                 UserId = student.UserId,
+                Email = user?.Email,
+                PhoneNumber = user?.PhoneNumber,
                 Name = student.Name,
                 ResumeUrl = student.ResumeUrl,
                 GPA = student.GPA,
@@ -279,10 +297,14 @@ namespace SCD_2025_BE.Controllers
             await _unitOfWork.StudentInfors.AddAsync(student);
             await _unitOfWork.SaveChangesAsync();
 
+            var user = await _userManager.FindByIdAsync(student.UserId);
+
             var response = new StudentInforResponseDto
             {
                 Id = student.Id,
                 UserId = student.UserId,
+                Email = user?.Email,
+                PhoneNumber = user?.PhoneNumber,
                 Name = student.Name,
                 ResumeUrl = student.ResumeUrl,
                 GPA = student.GPA,
@@ -458,10 +480,14 @@ namespace SCD_2025_BE.Controllers
             
             Console.WriteLine($"Save result: {saveResult} records affected");
 
+            var user = await _userManager.FindByIdAsync(student.UserId);
+
             var response = new StudentInforResponseDto
             {
                 Id = student.Id,
                 UserId = student.UserId,
+                Email = user?.Email,
+                PhoneNumber = user?.PhoneNumber,
                 Name = student.Name,
                 ResumeUrl = student.ResumeUrl,
                 GPA = student.GPA,
@@ -572,6 +598,7 @@ namespace SCD_2025_BE.Controllers
                     NiceToHave = job.NiceToHave,
                     CompanyInforId = job.CompanyInforId,
                     CompanyName = job.CompanyInfor.CompanyName,
+                    CompanyLogo = job.CompanyInfor.LogoUrl,
                     Location = job.Location,
                     Status = job.Status,
                     CategoryId = job.CategoryId,

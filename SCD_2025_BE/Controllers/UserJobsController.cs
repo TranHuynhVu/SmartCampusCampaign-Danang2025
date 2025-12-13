@@ -613,9 +613,18 @@ namespace SCD_2025_BE.Controllers
         {
             var jobData = job ?? userJob.Job;
 
-            // Lấy thông tin student nếu cần
+            // Lấy thông tin student
             string? studentName = null;
             string? studentAvatar = null;
+            string? studentEmail = null;
+            string? studentGPA = null;
+            string? studentSkills = null;
+            string? studentYearOfStudy = null;
+            string? studentMajor = null;
+            string? studentResumeUrl = null;
+            string? studentLanguages = null;
+            string? studentExperiences = null;
+            bool? studentOpenToWork = null;
 
             if (userJob.UserId != null)
             {
@@ -624,6 +633,20 @@ namespace SCD_2025_BE.Controllers
                 {
                     studentName = student.Name;
                     studentAvatar = student.AvatarUrl;
+                    studentGPA = student.GPA;
+                    studentSkills = student.Skills;
+                    studentYearOfStudy = student.YearOfStudy;
+                    studentMajor = student.Major;
+                    studentResumeUrl = student.ResumeUrl;
+                    studentLanguages = student.Languages;
+                    studentExperiences = student.Experiences;
+                    studentOpenToWork = student.OpenToWork;
+                }
+                
+                // Lấy email từ User
+                if (userJob.User != null)
+                {
+                    studentEmail = userJob.User.Email;
                 }
             }
 
@@ -631,11 +654,45 @@ namespace SCD_2025_BE.Controllers
             {
                 Id = userJob.Id,
                 UserId = userJob.UserId,
+                
+                // Student Information
                 StudentName = studentName,
                 StudentAvatar = studentAvatar,
+                StudentEmail = studentEmail,
+                StudentGPA = studentGPA,
+                StudentSkills = studentSkills,
+                StudentYearOfStudy = studentYearOfStudy,
+                StudentMajor = studentMajor,
+                StudentResumeUrl = studentResumeUrl,
+                StudentLanguages = studentLanguages,
+                StudentExperiences = studentExperiences,
+                StudentOpenToWork = studentOpenToWork,
+                
+                // Job Information
                 JobId = userJob.JobId,
                 JobTitle = jobData?.Title,
+                JobDescription = jobData?.Description,
+                JobSalaryRange = jobData?.SalaryRange,
+                JobLocation = jobData?.Location,
+                JobDayOfWeek = jobData?.DayOfWeek,
+                JobTimeOfDay = jobData?.TimeOfDay,
+                JobBenefits = jobData?.Benefits,
+                JobRequirements = jobData?.Requirements,
+                JobStatus = jobData?.Status,
+                
+                // Company Information
+                CompanyInforId = jobData?.CompanyInforId,
                 CompanyName = jobData?.CompanyInfor?.CompanyName,
+                CompanyLogoUrl = jobData?.CompanyInfor?.LogoUrl,
+                CompanyWebsite = jobData?.CompanyInfor?.CompanyWebsite,
+                CompanyLocation = jobData?.CompanyInfor?.Location,
+                CompanyDescriptions = jobData?.CompanyInfor?.Descriptions,
+                
+                // Category Information
+                CategoryId = jobData?.CategoryId,
+                CategoryName = jobData?.Category?.Name,
+                
+                // UserJob Information
                 Type = userJob.Type,
                 Status = userJob.Status,
                 UpdatedBy = userJob.UpdatedBy,

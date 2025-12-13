@@ -7,6 +7,7 @@ namespace SCD_2025_BE.Entities.DTO
         // User fields
         public string Email { get; set; }
         public string Password { get; set; }
+        public string? PhoneNumber { get; set; }
         
         // StudentInfor fields - optional if Resume is provided
         public string? Name { get; set; }

@@ -24,14 +24,14 @@ namespace SCD_2025_BE.Data
             // Configure relationships
             modelBuilder.Entity<CompanyInfor>()
                 .HasOne(c => c.User)
-                .WithMany()
-                .HasForeignKey(c => c.UserId)
+                .WithOne(u => u.CompanyInfor)
+                .HasForeignKey<CompanyInfor>(c => c.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<StudentInfor>()
                 .HasOne(s => s.User)
-                .WithMany()
-                .HasForeignKey(s => s.UserId)
+                .WithOne(u => u.StudentInfor)
+                .HasForeignKey<StudentInfor>(s => s.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Job>()

@@ -351,6 +351,7 @@ namespace SCD_2025_BE.Controllers
             {
                 UserName = requestDto.Email,
                 Email = requestDto.Email,
+                PhoneNumber = requestDto.PhoneNumber,
                 CreatedAt = DateTime.UtcNow
             };
 

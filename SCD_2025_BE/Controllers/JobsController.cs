@@ -6,6 +6,8 @@ using SCD_2025_BE.Repositories;
 using SCD_2025_BE.Service;
 using System.Security.Claims;
 using System.Text.Json;
+using ClosedXML.Excel;
+using Microsoft.AspNetCore.Identity;
 
 namespace SCD_2025_BE.Controllers
 {
@@ -16,11 +18,13 @@ namespace SCD_2025_BE.Controllers
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IGemini _geminiService;
+        private readonly UserManager<AppUser> _userManager;
 
-        public JobsController(IUnitOfWork unitOfWork, IGemini geminiService)
+        public JobsController(IUnitOfWork unitOfWork, IGemini geminiService, UserManager<AppUser> userManager)
         {
             _unitOfWork = unitOfWork;
             _geminiService = geminiService;
+            _userManager = userManager;
         }
 
         // GET: api/Jobs
@@ -359,6 +363,156 @@ namespace SCD_2025_BE.Controllers
                 .ToList();
 
             return Ok(topSuggestions);
+        }
+
+        // GET: api/Jobs/ExportCandidateSuggestions/{jobId}
+        [HttpGet("ExportCandidateSuggestions/{jobId}")]
+        [Authorize(Roles = "Company,Admin")]
+        public async Task<IActionResult> ExportCandidateSuggestions(int jobId, [FromQuery] int top = 10)
+        {
+            var job = await _unitOfWork.Jobs.GetJobWithDetailsAsync(jobId);
+            
+            if (job == null || job.DeletedAt != null)
+            {
+                return NotFound(new { Message = "Không tìm thấy công việc." });
+            }
+
+            // Kiểm tra quyền truy cập
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+            if (userRole != "Admin" && job.CompanyInfor.UserId != userId)
+            {
+                return Forbid();
+            }
+
+            if (string.IsNullOrWhiteSpace(job.Embeddings))
+            {
+                return BadRequest(new { Message = "Công việc chưa có embedding. Vui lòng cập nhật công việc." });
+            }
+
+            var jobEmbedding = JsonSerializer.Deserialize<List<double>>(job.Embeddings);
+            if (jobEmbedding == null || jobEmbedding.Count == 0)
+            {
+                return BadRequest(new { Message = "Embedding không hợp lệ." });
+            }
+
+            // Lấy tất cả students đang active VÀ OpenToWork = true
+            var allStudents = await _unitOfWork.StudentInfors.GetActiveStudentsAsync();
+            var students = allStudents.Where(s => s.OpenToWork == true).ToList();
+
+            var candidateSuggestions = new List<CandidateSuggestionDto>();
+
+            foreach (var student in students)
+            {
+                if (string.IsNullOrWhiteSpace(student.EmBeddings))
+                    continue;
+
+                var studentEmbedding = JsonSerializer.Deserialize<List<double>>(student.EmBeddings);
+                if (studentEmbedding == null || studentEmbedding.Count == 0)
+                    continue;
+
+                var similarity = _geminiService.CosineSimilarity(jobEmbedding, studentEmbedding);
+
+                candidateSuggestions.Add(new CandidateSuggestionDto
+                {
+                    Id = student.Id,
+                    UserId = student.UserId,
+                    Name = student.Name,
+                    ResumeUrl = student.ResumeUrl,
+                    GPA = student.GPA,
+                    Skills = student.Skills,
+                    Archievements = student.Archievements,
+                    YearOfStudy = student.YearOfStudy,
+                    Major = student.Major,
+                    Languages = student.Languages,
+                    Certifications = student.Certifications,
+                    Experiences = student.Experiences,
+                    Projects = student.Projects,
+                    Educations = student.Educations,
+                    AvatarUrl = student.AvatarUrl,
+                    OpenToWork = student.OpenToWork,
+                    UpdatedBy = student.UpdatedBy,
+                    CreatedAt = student.CreatedAt,
+                    UpdatedAt = student.UpdatedAt,
+                    SimilarityScore = similarity
+                });
+            }
+
+            // Sắp xếp theo độ tương đồng giảm dần và lấy top kết quả
+            var topSuggestions = candidateSuggestions
+                .OrderByDescending(c => c.SimilarityScore)
+                .Take(top)
+                .ToList();
+
+            // Tạo Excel file
+            using var workbook = new XLWorkbook();
+            var worksheet = workbook.Worksheets.Add("Candidate Suggestions");
+
+            // Header
+            worksheet.Cell(1, 1).Value = "STT";
+            worksheet.Cell(1, 2).Value = "Tên sinh viên";
+            worksheet.Cell(1, 3).Value = "Email";
+            worksheet.Cell(1, 4).Value = "Số điện thoại";
+            worksheet.Cell(1, 5).Value = "GPA";
+            worksheet.Cell(1, 6).Value = "Năm học";
+            worksheet.Cell(1, 7).Value = "Chuyên ngành";
+            worksheet.Cell(1, 8).Value = "Kỹ năng";
+            worksheet.Cell(1, 9).Value = "Ngôn ngữ";
+            worksheet.Cell(1, 10).Value = "Kinh nghiệm";
+            worksheet.Cell(1, 11).Value = "Dự án";
+            worksheet.Cell(1, 12).Value = "Thành tích";
+            worksheet.Cell(1, 13).Value = "Chứng chỉ";
+            worksheet.Cell(1, 14).Value = "Học vấn";
+            worksheet.Cell(1, 15).Value = "Độ phù hợp (%)";
+            worksheet.Cell(1, 16).Value = "Link CV";
+
+            // Style header
+            var headerRange = worksheet.Range(1, 1, 1, 16);
+            headerRange.Style.Font.Bold = true;
+            headerRange.Style.Fill.BackgroundColor = XLColor.LightBlue;
+            headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+            // Data
+            int row = 2;
+            int stt = 1;
+            foreach (var candidate in topSuggestions)
+            {
+                // Lấy email và phone từ User
+                var user = await _userManager.FindByIdAsync(candidate.UserId);
+                string email = user?.Email ?? "";
+                string phone = user?.PhoneNumber ?? "";
+
+                worksheet.Cell(row, 1).Value = stt;
+                worksheet.Cell(row, 2).Value = candidate.Name ?? "";
+                worksheet.Cell(row, 3).Value = email;
+                worksheet.Cell(row, 4).Value = phone;
+                worksheet.Cell(row, 5).Value = candidate.GPA ?? "";
+                worksheet.Cell(row, 6).Value = candidate.YearOfStudy ?? "";
+                worksheet.Cell(row, 7).Value = candidate.Major ?? "";
+                worksheet.Cell(row, 8).Value = candidate.Skills ?? "";
+                worksheet.Cell(row, 9).Value = candidate.Languages ?? "";
+                worksheet.Cell(row, 10).Value = candidate.Experiences ?? "";
+                worksheet.Cell(row, 11).Value = candidate.Projects ?? "";
+                worksheet.Cell(row, 12).Value = candidate.Archievements ?? "";
+                worksheet.Cell(row, 13).Value = candidate.Certifications ?? "";
+                worksheet.Cell(row, 14).Value = candidate.Educations ?? "";
+                worksheet.Cell(row, 15).Value = Math.Round(candidate.SimilarityScore * 100, 2);
+                worksheet.Cell(row, 16).Value = candidate.ResumeUrl ?? "";
+
+                row++;
+                stt++;
+            }
+
+            // Auto-fit columns
+            worksheet.Columns().AdjustToContents();
+
+            // Tạo memory stream để trả về file
+            using var stream = new MemoryStream();
+            workbook.SaveAs(stream);
+            stream.Position = 0;
+
+            var fileName = $"CandidateSuggestions_{job.Title}_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+            return File(stream.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
     }
 }
