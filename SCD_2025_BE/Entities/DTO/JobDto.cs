@@ -44,6 +44,7 @@ namespace SCD_2025_BE.Entities.DTO
         public string ? CompanyLogo { get; set; }
         public string? CompanyName { get; set; }
         public string? Location { get; set; }
+        public string? LogoUrl { get; set; }
         public string Status { get; set; }
         public int CategoryId { get; set; }
         public string? CategoryName { get; set; }

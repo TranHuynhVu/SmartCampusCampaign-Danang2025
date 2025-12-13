@@ -124,6 +124,7 @@ namespace SCD_2025_BE.Controllers
                 Location = j.Location,
                 Status = j.Status,
                 CategoryId = j.CategoryId,
+                LogoUrl = j.CompanyInfor.LogoUrl,
                 CategoryName = j.Category.Name,
                 UpdatedBy = j.UpdatedBy,
                 CreatedAt = j.CreatedAt,
